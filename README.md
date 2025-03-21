@@ -34,26 +34,27 @@
 <img    alt = "ciconha"  width = "-250px"   src = "https://github.com/user-attachments/assets/a8b35bce-57d5-4aea-b59d-46e13928b7ee">  
 </div>
 
-
+</br>
+</br>
 
 
 
 <h3>
 
 👨‍💻 **Apaixonado por tecnologia** → Adoro explorar novas ferramentas e linguagens.  
-
+---
 🛠️ **Back-end é minha praia** → Construo APIs e sistemas eficientes.  
-
+---
 🐍 **Fã de Python e Java** → Meus principais aliados no desenvolvimento.  
-
+---
 🐘 **PostgreSQL para banco de dados** → Estruturando dados com eficiência. 
-
+---
 🐳 **Uso Docker para tudo** → Porque ambiente isolado é vida!  
-
+---
 🎯 **Buscando sempre evoluir** → Aprendendo e aprimorando minhas skills diariamente.  
-
+---
 🎮 **Lógica e estratégia** → Gosto de pensar em soluções, tanto no código quanto nos jogos.
-
+---
 
 
 
@@ -80,7 +81,7 @@
 <br/>
 
 <div align="center">
-    <img src="https://skillicons.dev/icons?i=spring,postgresql,next,flutter,androidstudio,figma," />
+    <img src="https://skillicons.dev/icons?i=spring,postgresql,next,react,androidstudio,figma,typescript" />
 </br>  
     </br>
    
@@ -92,11 +93,11 @@
 ### <h2 align="center">⚒️ Languages-Frameworks-Ferramentas ⚒️</h2>
 <br/>
 
-<div align="center">
-    <img src="https://skillicons.dev/icons?i=html,css,vscode,github,git," />
+<div align="center" >
+<img src="https://skillicons.dev/icons?i=nodejs,python,javascript,notion,c,java,mysql,flask" /><br>
     </br>  
     </br>
-    <img src="https://skillicons.dev/icons?i=nodejs,python,javascript,notion,typescript,c,java,mysql,flask" /><br>
+    <img src="https://skillicons.dev/icons?i=html,css,vscode,github,git,idea" />
 </div>
 
 ---
