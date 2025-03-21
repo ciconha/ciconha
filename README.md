@@ -1,5 +1,5 @@
 <div style = "dysplay : inline_block" >
-<img   aling = "center"  alt = "ciconha" width = "980px"  heigth= "700px" src = "https://cdn.discordapp.com/attachments/717042849014743041/1342621121165393972/Eduardo-banner-github.gif?ex=67ba4cdb&is=67b8fb5b&hm=dad3d9aa571667d6a0979888a6e3633683e06ea1c6e9016219779eb281d5dd45&">  
+<img   aling = "center"  alt = "ciconha" width = "980px"  heigth= "700px" src ="https://cdn.discordapp.com/attachments/717042849014743041/1342621121165393972/Eduardo-banner-github.gif?ex=67ba4cdb&is=67b8fb5b&hm=dad3d9aa571667d6a0979888a6e3633683e06ea1c6e9016219779eb281d5dd45&">  
 </div>
 
 <h1 align="center" >
