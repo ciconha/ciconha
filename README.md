@@ -144,7 +144,7 @@
 ---
 
 <div align=" left" style = "dysplay : inline_block; margin-top: -30"  >
-<img    alt = "ciconha"  width = "300px"  heigth= "-700px"  src = "https://cdn.discordapp.com/attachments/717042849014743041/1342659899171279011/Edu-sono-computer.gif?ex=67ba70f9&is=67b91f79&hm=059e0f00ca8f7cb950a0d2627958565663893c2692b324e1ad16c484f1e3cc75&">  
+<img    alt = "ciconha"  width = "300px"  heigth= "-700px"  src = "https://github.com/user-attachments/assets/c40f6450-8604-4b7f-b03a-cf1b73264688">  
 </div>
 
 </br>
