@@ -153,5 +153,6 @@
 
 
 <div style = "dysplay : inline_block; margin-top: 30" >
-<img   aling = "center"  alt = "ciconha" width = "1080"  height= "420px" src = "https://cdn.discordapp.com/attachments/717042849014743041/1342662581889925181/japao-edu-github-calmo.gif?ex=67ba7378&is=67b921f8&hm=5bdf93f753bfab99ec65131b8444d44e8215f61e019cae9559096291cdaa6f5e&">  
+<img   aling = "center"  alt = "ciconha" width = "1080"  height= "420px" src = "https://github.com/user-attachments/assets/ac79f40a-fbdd-48d3-93d3-d25e6582b96f">  
 </div>
+
