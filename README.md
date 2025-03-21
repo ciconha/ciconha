@@ -31,8 +31,11 @@
 <div>
 
 <div align=" left" style = "dysplay : inline_block ; margin-top:-350px "  >
-<img    alt = "ciconha"  width = "-250px"   src = "https://cdn.discordapp.com/attachments/717042849014743041/1342632687814574162/Detroid-Edu-Github.gif?ex=67ba57a1&is=67b90621&hm=043df5001a2a69eee79f9d2663718d8d204230027ef2bcc6912172eb9dade522&">  
+<img    alt = "ciconha"  width = "-250px"   src = "https://github.com/user-attachments/assets/a8b35bce-57d5-4aea-b59d-46e13928b7ee">  
 </div>
+
+
+
 
 
 <h3>
