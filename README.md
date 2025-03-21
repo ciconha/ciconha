@@ -74,7 +74,7 @@
 ### <h2 align="center">📓 estudando </h2>
 <br/>
 
-<div align="left">
+<div align="center">
     <img src="https://skillicons.dev/icons?i=spring,postgresql,next,flutter,androidstudio,figma," />
 </br>  
     </br>
@@ -87,7 +87,7 @@
 ### <h2 align="center">⚒️ Languages-Frameworks-Ferramentas ⚒️</h2>
 <br/>
 
-<div align="left">
+<div align="center">
     <img src="https://skillicons.dev/icons?i=html,css,vscode,github,git," />
     </br>  
     </br>
