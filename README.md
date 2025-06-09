@@ -156,18 +156,18 @@
 </br>
 </br>
 
+<div style = "dysplay : inline_block; margin-top: 30" >
+<img   aling = "center"  alt = "ciconha" width = "1080"  height= "220px" src = "https://github.com/user-attachments/assets/ac79f40a-fbdd-48d3-93d3-d25e6582b96f">  
+</div>
+
+---
+
+###
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
   <img alt="pacman contribution graph" src="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
 </picture>
 
-_generated with [abozanona/pacman-contribution-graph](https://abozanona.github.io/pacman-contribution-graph/)_
-
-
-
-
-<div style = "dysplay : inline_block; margin-top: 30" >
-<img   aling = "center"  alt = "ciconha" width = "1080"  height= "420px" src = "https://github.com/user-attachments/assets/ac79f40a-fbdd-48d3-93d3-d25e6582b96f">  
-</div>
+###
 
