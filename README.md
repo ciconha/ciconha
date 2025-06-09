@@ -5,7 +5,7 @@
 
 
 <h1 align="center" >
-    <img src="https://readme-typing-svg.herokuapp.com/?font=Righteous&size=35&center=true&vCenter=true&width=500&height=70&duration=4000&lines=Olá+!+👋;Eu+sou+Eduardo+Ciconha!;" />
+    <img src="https://readme-typing-svg.herokuapp.com/?font=Righteous&size=35&center=true&vCenter=true&width=500&height=70&duration=4000&lines=Olá+!+🤟🏻;Eu+sou+Eduardo+Ciconha!;" />
 </h1>
 
 ###
@@ -157,15 +157,7 @@
 </br>
 
 
-###
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
-  <img alt="pacman contribution graph" src="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
-</picture>
-
-###
 
 
 <div style = "dysplay : inline_block; margin-top: 30" >
