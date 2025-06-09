@@ -119,7 +119,11 @@
   <img width=367 src="https://github-readme-stats-salesp07.vercel.app/api?username=ciconha&count_private=true&show_icons=true&theme=react&rank_icon=github&border_radius=10" alt="readme stats" />
   <br/>
   <img width=325 align="center" src="https://github-readme-stats-salesp07.vercel.app/api/top-langs/?username=ciconha&hide=HTML&langs_count=8&layout=compact&theme=react&border_radius=10&size_weight=0.5&count_weight=0.5&exclude_repo=github-readme-stats" alt="top langs" />
+   <img src="https://github-profile-trophy.vercel.app?username=Ciconha&theme=dracula&column=-1&row=1&margin-w=8&margin-h=8&no-bg=false&no-frame=false&order=4" height="150" alt="trophy graph"  />
+  <img src="https://github-readme-activity-graph.vercel.app/graph?username=Ciconha&radius=16&theme=dracula&area=true&order=6" height="250" alt="activity-graph graph" />
 </div>
+
+
 
 ---
 
@@ -148,9 +152,20 @@
 <img    alt = "ciconha"  width = "300px"  heigth= "-700px"  src = "https://github.com/user-attachments/assets/c40f6450-8604-4b7f-b03a-cf1b73264688">  
 </div>
 
+
 </br>
 </br>
 
+
+###
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
+  <img alt="pacman contribution graph" src="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
+</picture>
+
+###
 
 
 <div style = "dysplay : inline_block; margin-top: 30" >
