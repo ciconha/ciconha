@@ -10,7 +10,7 @@ jobs:
       - name: Gerar métricas
         uses: lowlighter/metrics@latest
         with:
-          token: ${{ secrets.METRICS_TOKEN }}
+          token: ${{ secrets.METRICS_TOKE }}
           user: ciconha
           config_timezone: America/Sao_Paulo
           filename: github-metrics.svg
