@@ -6,19 +6,25 @@ on:
 jobs:
   github-metrics:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Permissão pra escrever no repositório
     steps:
       - name: Gerar métricas
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@master  # Usa versão com correções
         with:
           token: ${{ secrets.METRICS_TOKEN }}
           user: ciconha
           config_timezone: America/Sao_Paulo
           filename: github-metrics.svg
+
           base: header, languages
+          debug: yes  # Modo de depuração ativado
+
           plugin_languages: yes
           plugin_languages_ignored: HTML, CSS, C++, C#, Ruby, Dart, CMake, TypeScript, Python
           plugin_languages_limit: 3
           plugin_languages_sections: most-used
+
           plugin_followup: yes
           plugin_stars: yes
           plugin_topics: yes
