@@ -7,26 +7,24 @@ jobs:
   github-metrics:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Permissão pra escrever no repositório
+      contents: write
+
     steps:
-      - name: Gerar métricas
-        uses: lowlighter/metrics@master  # Usa versão com correções
+      # 🔷 Visão geral
+      - name: Overview
+        uses: lowlighter/metrics@master
         with:
           token: ${{ secrets.METRICS_TOKEN }}
           user: ciconha
           config_timezone: America/Sao_Paulo
           filename: github-metrics.svg
-
           base: header, languages
-          debug: yes  # Modo de depuração ativado
-
-          # 🔥 Linguagens destacadas: JavaScript e Java
+          debug: yes
           plugin_languages: yes
           plugin_languages_indepth: yes
           plugin_languages_sections: most-used
           plugin_languages_limit: 2
           plugin_languages_languages: JavaScript, Java
-
           plugin_followup: yes
           plugin_stars: yes
           plugin_topics: yes
@@ -35,3 +33,41 @@ jobs:
           plugin_habits: yes
           plugin_anilist: yes
           plugin_isocalendar: yes
+
+      # 🏆 Conquistas separadas
+      - name: Achievements
+        uses: lowlighter/metrics@master
+        with:
+          token: ${{ secrets.METRICS_TOKEN }}
+          user: ciconha
+          filename: achievements.svg
+          plugin_achievements: yes
+          plugin_achievements_threshold: C
+          plugin_achievements_secrets: yes
+          plugin_achievements_display: compact
+          plugin_fortune: yes
+
+      # 🎧 Música
+      - name: Music
+        uses: lowlighter/metrics@master
+        with:
+          token: ${{ secrets.METRICS_TOKEN }}
+          user: ciconha
+          filename: music.svg
+          plugin_music: yes
+          plugin_music_provider: spotify
+          plugin_music_token: ${{ secrets.SPOTIFY_TOKEN }}
+          plugin_music_mode: recent
+          plugin_music_limit: 5
+
+      # 📺 Animes favoritos
+      - name: Anime
+        uses: lowlighter/metrics@master
+        with:
+          token: ${{ secrets.METRICS_TOKEN }}
+          user: ciconha
+          filename: anime.svg
+          plugin_anilist: yes
+          plugin_anilist_user: ciconha
+          plugin_anilist_sections: favorites
+          plugin_anilist_limit: 6
