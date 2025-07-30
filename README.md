@@ -173,7 +173,7 @@
 
 [<img align="left" width="390" src="https://github.com/ciconha/ciconha/blob/main/github-metrics.svg">](#)
 
-[<img align="right" width="390" src="https://github.com/ciconha/ciconha/blob/main/contributors.svg">](#)
+[<img align="right" width="390" src="https://github.com/ciconha/ciconha/blob/main/discussions.svg">](#)
 
 
 
