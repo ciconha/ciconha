@@ -20,10 +20,12 @@ jobs:
           base: header, languages
           debug: yes  # Modo de depuração ativado
 
+          # 🔥 Linguagens destacadas: JavaScript e Java
           plugin_languages: yes
-          plugin_languages_ignored: HTML, CSS, C++, C#, Ruby, Dart, CMake, TypeScript, Python
-          plugin_languages_limit: 3
+          plugin_languages_indepth: yes
           plugin_languages_sections: most-used
+          plugin_languages_limit: 2
+          plugin_languages_languages: JavaScript, Java
 
           plugin_followup: yes
           plugin_stars: yes
