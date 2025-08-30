@@ -9,8 +9,8 @@
 <img src="https://skillicons.dev/icons?i=python,java,javascript,typescript,flutter" align="right" width="220"/><br>
 
 <img src="https://skillicons.dev/icons?i=docker,bash,firebase,mongodb,linux" align="right" width="220"/>
-
-<img src="https://github-trophies.vercel.app/?username=Ciconha&theme=algolia" width="410" alt="trophy graph" align="right" top="-100" />
+<br>
+<img src="https://github-trophies.vercel.app/?username=Ciconha&theme=algolia" width="415" alt="trophy graph" align="right" top="-100" />
 <br>
 <br>
 
