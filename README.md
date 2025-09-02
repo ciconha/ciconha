@@ -22,3 +22,5 @@
 </picture>
 
 ###
+<br><br>
+> Bom caso você queira ver mais projetos e conteudos que eu desnevolvo convido você a olhar o meu space. Lá eu sou mais interativo do que no linkedin e outras redes.
