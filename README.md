@@ -23,4 +23,4 @@
 
 ###
 <br><br>
-> Bom caso você queira ver mais projetos e conteudos que eu desnevolvo convido você a olhar o meu [space](https://ciconha-space-41e73.web.app/). Lá eu sou mais interativo do que no linkedin e outras redes.
+> Bom caso você queira ver mais projetos e conteudos que eu desenvolvo convido você a olhar o meu [space](https://ciconha-space-41e73.web.app/). Lá eu sou mais interativo do que no linkedin e outras redes.
