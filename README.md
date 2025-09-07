@@ -21,6 +21,18 @@
   <img alt="pacman contribution graph" src="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
 </picture>
 
+# 🧠 Dudu's Dev Mural
+
+[![GitHub Stats](https://github-readme-stats.vercel.app/api?username=ciconha-dev&show_icons=true&theme=tokyonight)](https://github.com/ciconha-dev)
+
+[![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=ciconha-dev&layout=compact&theme=tokyonight)](https://github.com/ciconha-dev)
+
+[![Trophies](https://github-profile-trophy.vercel.app/?username=ciconha-dev&theme=darkhub&column=1)](https://github.com/ciconha-dev)
+
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+
+
 ###
 <br><br>
 > Bom caso você queira ver mais projetos e conteudos que eu desenvolvo convido você a olhar o meu [space](https://ciconha-space.vercel.app/). Lá eu sou mais interativo do que no linkedin e outras redes.
