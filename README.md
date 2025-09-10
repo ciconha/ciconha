@@ -17,12 +17,13 @@
 <br>
 <img alt="Image" src="https://github.com/user-attachments/assets/5f2f0b66-38f2-4946-9684-a82eb28831df" width="350" align="left"  />
 <br>
-
+  
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
   <img alt="pacman contribution graph" src="https://raw.githubusercontent.com/Ciconha/Ciconha/output/pacman-contribution-graph.svg">
 </picture>
+
 
 <br><br>
 > Bom caso você queira ver mais projetos e conteudos que eu desenvolvo convido você a olhar o meu [space](https://ciconha-space.vercel.app/). Lá eu sou mais interativo do que no linkedin e outras redes.
