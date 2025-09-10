@@ -13,7 +13,7 @@
 <img src="https://github-trophies.vercel.app/?username=Ciconha&theme=algolia" width="415" alt="trophy graph" align="right" top="-100" />
 <br>
 <br>
-<br><br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br><br><br>
 <br>
 <img alt="Image" src="https://github.com/user-attachments/assets/5f2f0b66-38f2-4946-9684-a82eb28831df" width="400" align="left"  />
 <br>
