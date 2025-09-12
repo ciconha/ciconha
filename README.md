@@ -15,7 +15,10 @@
 <br>
 <br><br><br><br><br><br><br><br><br>
 <br>
-<img alt="Image" src="https://github.com/user-attachments/assets/5f2f0b66-38f2-4946-9684-a82eb28831df" width="350" align="left"  />
+<p align="center">
+  <img alt="Image" src="https://github.com/user-attachments/assets/5f2f0b66-38f2-4946-9684-a82eb28831df" width="350" />
+</p>
+
 <br>
   
 <picture>
