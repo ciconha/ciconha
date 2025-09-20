@@ -23,9 +23,10 @@ jobs:
           plugin_languages: yes
           plugin_languages_indepth: yes
           plugin_languages_sections: most-used
-          plugin_languages_limit: 2
-          plugin_languages_languages: JavaScript, Java
-          plugin_languages_ignored: html, css, tsx, dart, c++, python, cmake, swift, typescript, c, glsl
+          plugin_languages_limit: 3
+          plugin_languages_languages: JavaScript, Python, Ruby
+          plugin_languages_ignored: html, css, tsx, dart, c++, cmake, swift, typescript, c, glsl, java
+
           plugin_followup: yes
           plugin_stars: yes
           plugin_topics: yes
