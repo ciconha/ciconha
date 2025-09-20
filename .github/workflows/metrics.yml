@@ -14,7 +14,7 @@ jobs:
       - name: Overview
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.METRICS_TOKEN }}
+          token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           config_timezone: America/Sao_Paulo
           filename: github-metrics.svg
