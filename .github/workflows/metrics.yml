@@ -21,7 +21,9 @@ jobs:
           base: header, languages
           debug: yes
           plugin_languages: yes
-          plugin_languages_sections: languages
+          plugin_languages_indepth: yes
+          plugin_languages_sections: most-used
+          plugin_languages_layout: list      
           plugin_languages_limit: 3
           plugin_languages_languages: JavaScript, Python, Ruby
           plugin_languages_ignored: powershell, html, css, tsx, dart, c++, cmake, swift, typescript, c, glsl, java, shell, batch, go, rust, php, kotlin
