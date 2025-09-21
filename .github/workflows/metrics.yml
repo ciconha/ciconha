@@ -1,59 +1,55 @@
+# .github/workflows/metrics.yml
+
 name: Metrics
 
 on:
   schedule:
-    - cron: "0 0 * * *"      # todo dia à meia-noite
-  workflow_dispatch:         # permite execução manual
+    - cron: "0 0 * * *"      # Executa todo dia à meia-noite
+  workflow_dispatch:         # Permite execução manual
 
 jobs:
   github-metrics:
     runs-on: ubuntu-latest
     permissions:
-      contents: write        # gravação de arquivos no repositório
+      contents: write        # Permite gravar o SVG no repo
 
     steps:
-      # 🔷 Visão geral customizada
       - name: Overview
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.Tsukuyomi_Ciconha }}
+          token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           config_timezone: America/Sao_Paulo
           filename: github-metrics.svg
-          base: header, languages
+          base: header,languages
           debug: yes
 
-          plugin_isocalendar: yes
-
-          # lista vertical com só 3 linguagens
+          # ─── Linguagens ───
           plugin_languages: yes
-          plugin_languages_sections: languages
-          plugin_languages_layout: list
-          plugin_languages_limit: 3
-
-          # apenas essas três
+          plugin_languages_sections: languages      # lista vertical
+          plugin_languages_limit: 3                # só 3 linhas
+          plugin_languages_branches: main          # branch padrão
           plugin_languages_languages: JavaScript,Python,Ruby
-
-          # esconde todas as outras
           plugin_languages_ignored: powershell,html,css,tsx,dart,c++,cmake,swift,typescript,c,glsl,java,shell,batch,go,rust,php,kotlin,tex,less,dockerfile,makefile,qmake,lex,gnuplot,vue,scala
-
-          # detalhes: linhas, tamanho, porcentagem e nº de repositórios
           plugin_languages_details: lines,bytes-size,percentage
-          plugin_languages_repos: yes
+          plugin_languages_repos: yes              # mostra nº de repositórios
+          plugin_languages_colors: "#f1e05a,#3572A5,#701516"
 
-          # tópicos não aparecem (ícones apenas)
+          # ─── Outros Plugins ───
+          plugin_isocalendar: yes
           plugin_topics: yes
-          plugin_topics_limit: 0
           plugin_topics_mode: icons
-
+          plugin_topics_limit: 0
           plugin_notable: yes
           plugin_discussions: yes
+          plugin_stars: yes
+          plugin_achievements: yes
+          plugin_habits: yes
 
-      # 🏆 Conquistas
       - name: Achievements
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.Tsukuyomi_Ciconha }}
+          token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: achievements.svg
           plugin_achievements: yes
@@ -62,11 +58,10 @@ jobs:
           plugin_achievements_display: compact
           plugin_fortune: yes
 
-      # 👥 Contribuidores
       - name: Contributors
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.Tsukuyomi_Ciconha }}
+          token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: contributors.svg
           plugin_contributors: yes
@@ -74,31 +69,28 @@ jobs:
           plugin_contributors_types: all
           plugin_contributors_categories: all
 
-      # 💬 Contribuições
       - name: Contributions
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.Tsukuyomi_Ciconha }}
+          token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: contributions.svg
           plugin_contributions: yes
           plugin_contributions_sections: repositories,issues,pulls
 
-      # 🧵 Discussões
       - name: Discussions
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.Tsukuyomi_Ciconha }}
+          token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: discussions.svg
           plugin_discussions: yes
           plugin_discussions_categories: yes
 
-      # 🌟 Tópicos Favoritos
       - name: Starred Topics
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.Tsukuyomi_Ciconha }}
+          token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: starred-topics.svg
           plugin_topics: yes
