@@ -27,14 +27,14 @@ jobs:
 
           # ─── Linguagens ───
           plugin_languages: yes
-          plugin_languages_sections: most-used      # barra horizontal
-          plugin_languages_limit: 3                # mostra 3
+          plugin_languages_sections: most-used
+          plugin_languages_limit: 3
           plugin_languages_languages: JavaScript, Python, Ruby
           plugin_languages_ignored: html, css, tsx, dart, c++, cmake, swift, typescript, c, glsl, java, shell, batch, go, rust, php, kotlin, powershell
-          plugin_languages_colors: "#f1e05a,#3572A5,#701516"
-          plugin_languages_indepth: yes            # linhas, tamanho e %
+          plugin_languages_colors: "#f1e05a,#3572A5,#701516" 
+          plugin_languages_indepth: yes
 
-          # ─── Demais plugins ───
+          # ─── Demais plugins globais ───
           plugin_followup: yes
           plugin_stars: yes
           plugin_topics: yes
@@ -44,20 +44,21 @@ jobs:
           plugin_achievements: yes
           plugin_habits: yes
           plugin_isocalendar: yes
+          plugin_fortune: yes
 
       # 🏆 Conquistas
       - name: Achievements
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.TSUKUYOMI_CICONHA }}
-          user: ciconha
-          filename: achievements.svg
-          plugin_achievements: yes
-          plugin_achievements_threshold: C
-          plugin_achievements_secrets: yes
-          plugin_achievements_display: compact
-          plugin_fortune: yes
-
+         token: ${{ secrets.TSUKUYOMI_CICONHA }}
+         user: ciconha
+         filename: achievements.svg
+         plugin_achievements: yes
+         plugin_achievements_threshold: C
+         plugin_achievements_secrets: yes
+         plugin_achievements_display: compact
+         plugin_fortune: yes
+        
       # 👥 Contribuidores
       - name: Contributors
         uses: lowlighter/metrics@master
