@@ -29,8 +29,8 @@ jobs:
           plugin_languages: yes
           plugin_languages_sections: most-used
           plugin_languages_limit: 3
-          plugin_languages_languages: JavaScript, Python, Ruby
-          plugin_languages_ignored: html, css, tsx, dart, c++, cmake, swift, typescript, c, glsl, java, shell, batch, go, rust, php, kotlin, powershell
+          plugin_languages_languages: JavaScript, Python, Java
+          plugin_languages_ignored: html, css, tsx, dart, c++, cmake, swift, typescript, c, glsl, ruby, shell, batch, go, rust, php, kotlin, powershell
           plugin_languages_colors: "#f1e05a,#3572A5,#701516" 
           plugin_languages_indepth: yes
 
