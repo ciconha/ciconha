@@ -2,8 +2,8 @@ name: Metrics
 
 on:
   schedule:
-    - cron: "0 0 * * *"       # executa todo dia à meia-noite
-  workflow_dispatch:          # permite disparo manual
+    - cron: "0 0 * * *"
+  workflow_dispatch:
   push:
     branches: [ main ]
 
@@ -11,12 +11,15 @@ jobs:
   github-metrics:
     runs-on: ubuntu-latest
     permissions:
-      contents: write         # grava o SVG no repositório
+      contents: write
+      id-token: write
 
     steps:
-      # 🔷 VISÃO GERAL - Layout Principal (JavaScript, Python, Java)
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Overview
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
@@ -24,40 +27,38 @@ jobs:
           filename: github-metrics.svg
           base: header, languages, activity, repositories
           config_order: base.header, plugin.languages, base.activity, plugin.achievements, base.repositories, plugin.stars, plugin.topics
-          
-          # 🎯 HEADER PERSONALIZADO
+
+          # Header
           base_header: yes
           base_header_info: yes
           base_header_info_lines: followers, repositories, contributions, stars
           base_header_badges: yes
           base_header_badges_max: 6
-          
-          # ─── LINGUAGENS EM 3 COLUNAS ───
+
+          # Languages (uso básico e indepth)
           plugin_languages: yes
           plugin_languages_sections: most-used
           plugin_languages_limit: 3
           plugin_languages_languages: JavaScript, Python, Java
           plugin_languages_ignored: html, css, tsx, dart, c++, cmake, swift, typescript, c, glsl, ruby, shell, batch, go, rust, php, kotlin, powershell
-          plugin_languages_colors: "#f1e05a,#3572A5,#701516" 
+          plugin_languages_colors: "#f1e05a,#3572A5,#701516"
           plugin_languages_indepth: yes
-          plugin_languages_details: percentage, commits
-          plugin_languages_analysis_timeout: 20
-          
-          # 📈 ATIVIDADE RECENTE
+
+          # Activity
           base_activity: yes
           base_activity_visibility: all
           base_activity_limit: 6
           base_activity_days: 14
           base_activity_filter: all
-          
-          # 📚 REPOSITÓRIOS
+
+          # Repositories
           base_repositories: yes
           base_repositories_limit: 6
           base_repositories_featured: 3
           base_repositories_description: yes
           base_repositories_topics: yes
-          
-          # ─── PLUGINS GLOBAIS ───
+
+          # Global plugins (compatíveis)
           plugin_achievements: yes
           plugin_achievements_threshold: C
           plugin_achievements_secrets: yes
@@ -68,25 +69,24 @@ jobs:
           plugin_topics_mode: starred, labels
           plugin_topics_sort: stars
           plugin_topics_limit: 10
+          plugin_topics_affiliations: owner, collaborator
           plugin_habits: yes
           plugin_habits_from: 200
           plugin_habits_facts: yes
           plugin_isocalendar: yes
-          plugin_isocalendar_years: 1
+          plugin_isocalendar_days: 365
           plugin_fortune: yes
           plugin_followup: yes
 
-      # 💻 LINGUAGENS STACK - Layout 3 em linha (Simon Style)
       - name: Languages Stack
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: languages-stack.svg
           base: ""
           config_order: plugin.languages
-          
-          # 🎨 LINGUAGENS EM TRÊS COLUNAS - ESTILO SIMON
+
           plugin_languages: yes
           plugin_languages_sections: most-used
           plugin_languages_limit: 3
@@ -94,23 +94,16 @@ jobs:
           plugin_languages_ignored: html, css, tsx, dart, c++, cmake, swift, typescript, c, glsl, ruby, shell, batch, go, rust, php, kotlin, powershell
           plugin_languages_colors: "#f1e05a,#3572A5,#701516"
           plugin_languages_indepth: yes
-          plugin_languages_details: percentage, commits, lines
-          plugin_languages_analysis_timeout: 15
-          plugin_languages_recent_load: 400
-          plugin_languages_recent_days: 30
-          plugin_languages_progress: yes
-          plugin_languages_progress_mode: classic
 
-      # 🏆 CONQUISTAS COMPLETAS
       - name: Achievements
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: achievements.svg
           base: ""
           config_order: plugin.achievements, plugin.fortune
-          
+
           plugin_achievements: yes
           plugin_achievements_threshold: C
           plugin_achievements_secrets: yes
@@ -118,90 +111,83 @@ jobs:
           plugin_achievements_limit: 0
           plugin_fortune: yes
 
-      # 👥 CONTRIBUIDORES
       - name: Contributors
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: contributors.svg
           base: ""
           config_order: plugin.contributors
-          
+
           plugin_contributors: yes
           plugin_contributors_sections: contributors
           plugin_contributors_types: all
           plugin_contributors_categories: all
           plugin_contributors_limit: 25
-          plugin_contributors_size: medium
+          plugin_contributors_chart: medium
 
-      # 💬 CONTRIBUIÇÕES DETALHADAS
       - name: Contributions
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: contributions.svg
           base: ""
           config_order: plugin.contributions
-          
+
           plugin_contributions: yes
           plugin_contributions_sections: repositories, issues, pulls
           plugin_contributions_limit: 12
           plugin_contributions_mode: full
           plugin_contributions_height: 350
 
-      # 🧵 DISCUSSÕES INICIADAS
       - name: Discussions
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: discussions.svg
           base: ""
           config_order: plugin.discussions
-          
+
           plugin_discussions: yes
           plugin_discussions_categories: yes
           plugin_discussions_limit: 15
-          plugin_discussions_reactions: yes
 
-      # 🌟 TÓPICOS FAVORITOS
       - name: Starred Topics
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: starred-topics.svg
           base: ""
           config_order: plugin.topics
-          
+
           plugin_topics: yes
           plugin_topics_mode: starred
           plugin_topics_sort: stars
           plugin_topics_limit: 12
           plugin_topics_affiliations: owner, collaborator
 
-      # 📊 HABITS E ESTATÍSTICAS
       - name: Coding Habits
-        uses: lowlighter/metrics@master
+        uses: lowlighter/metrics@latest
         with:
           token: ${{ secrets.TSUKUYOMI_CICONHA }}
           user: ciconha
           filename: habits.svg
           base: ""
           config_order: plugin.habits, plugin.isocalendar
-          
+
           plugin_habits: yes
           plugin_habits_from: 200
           plugin_habits_facts: yes
           plugin_habits_charts: yes
           plugin_habits_goal: 50
           plugin_isocalendar: yes
-          plugin_isocalendar_years: 1
+          plugin_isocalendar_days: 365
           plugin_isocalendar_colors: github
 
-      # 🎯 COMMIT AUTOMÁTICO
       - name: Commit changes
         run: |
           git config --local user.email "action@github.com"
