@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       usuario:
-        description: 'Nome de usuário do GitHub'
+        description: 'ciconha'
         required: true
         default: 'ciconha'
 
