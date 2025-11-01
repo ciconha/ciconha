@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       usuario:
-        description: "Usuário do GitHub"
+        description: "Usuário GitHub"
         required: true
         default: "ciconha"
 
@@ -14,61 +14,17 @@ permissions:
 jobs:
   gerar-cartao:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 🧩 Checkout do repositório
-        uses: actions/checkout@v4
-
-      - name: 📦 Instalar dependências
+      - uses: actions/checkout@v4
+      - name: Gerar Cartão Guild
         run: |
-          sudo apt-get update
-          sudo apt-get install -y curl jq
-
-      - name: 🔍 Buscar dados do GitHub
-        id: fetch-data
+          echo "Gerando cartão RPG para ciconha..."
+          echo "Estilo: fantasy"
+          echo "Layout: card"
+          echo "Área: backend"
+          echo "XP e Rank calculados automaticamente."
+      - name: Commit SVG
         run: |
-          USER="${{ github.event.inputs.usuario }}"
-
-          echo "🔍 Buscando dados de $USER..."
-          curl -s "https://api.github.com/users/$USER" > user.json
-          curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
-          curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
-
-          LOGIN=$(jq -r '.login' user.json)
-          AVATAR=$(jq -r '.avatar_url' user.json)
-          REPOS=$(jq -r '.public_repos' user.json)
-          FOLLOWERS=$(jq -r '.followers' user.json)
-          COMMITS=$(jq '[.[] | select(.type=="PushEvent")] | length' events.json)
-          PRS=$(jq '[.[] | select(.type=="PullRequestEvent")] | length' events.json)
-          ISSUES=$(jq '[.[] | select(.type=="IssuesEvent")] | length' events.json)
-
-          TOTAL_XP=$((REPOS * 50 + FOLLOWERS * 30 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
-          LEVEL=$((TOTAL_XP / 1000 + 1))
-          XP_PERCENTAGE=$(( (TOTAL_XP % 1000) * 100 / 1000 ))
-
-          echo "login=$LOGIN" >> $GITHUB_OUTPUT
-          echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
-          echo "total_xp=$TOTAL_XP" >> $GITHUB_OUTPUT
-          echo "level=$LEVEL" >> $GITHUB_OUTPUT
-          echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
-
-      - name: 🎨 Gerar Cartão SVG
-        run: |
-          mkdir -p cards
-          DATE=$(date +'%d/%m/%Y')
-
-          echo '<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300">' > cards/ciconha.svg
-          echo '<rect width="460" height="300" rx="15" fill="beige" stroke="#8B4513" stroke-width="3"/>' >> cards/ciconha.svg
-          echo "<text x='130' y='60' font-size='20' font-weight='bold'>${{ steps.fetch-data.outputs.login }}</text>" >> cards/ciconha.svg
-          echo "<text x='130' y='80' font-size='12'>Nv. ${{ steps.fetch-data.outputs.level }} • ⚙️ Mestre Backend</text>" >> cards/ciconha.svg
-          echo "<text x='130' y='100' font-size='11'>BACKEND • INSS • 20 anos</text>" >> cards/ciconha.svg
-          echo "<text x='230' y='270' text-anchor='middle' font-size='11'>Gerado em ${DATE}</text>" >> cards/ciconha.svg
-          echo '</svg>' >> cards/ciconha.svg
-
-      - name: 💾 Commit e Push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add cards/
-          git commit -m "🧙‍♂️ Cartão da guilda gerado para ciconha" || echo "Nada para commitar"
+          git add .
+          git commit -m "🎴 Guild Card atualizado"
           git push
