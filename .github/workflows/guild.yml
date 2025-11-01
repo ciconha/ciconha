@@ -1,4 +1,4 @@
-name: guild.yml Workflow
+name: guild.yml
 
 on:
   workflow_dispatch:
@@ -7,6 +7,8 @@ on:
         description: "Usuário do GitHub"
         required: true
         default: "ciconha"
+  schedule:
+    - cron: '0 0 * * 0'
 
 permissions:
   contents: write
@@ -14,38 +16,63 @@ permissions:
 jobs:
   gerar-cartao:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: 🧩 Checkout do repositório
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📦 Instalar dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl jq
+          sudo apt-get install -y curl jq bc
 
       - name: 🔍 Buscar dados do GitHub
         id: fetch-data
         run: |
           USER="${{ github.event.inputs.usuario }}"
-          curl -s "https://api.github.com/users/$USER" > user.json
-          curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
-          curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
+          
+          # Buscar dados do usuário
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/users/$USER" > user.json
+          
+          # Buscar repositórios
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/users/$USER/repos?sort=stars&per_page=100&page=1" > repos_page1.json
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/users/$USER/repos?sort=stars&per_page=100&page=2" > repos_page2.json
+          
+          # Buscar eventos
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/users/$USER/events?per_page=100" > events.json
 
+          # Processar dados
           LOGIN=$(jq -r '.login' user.json)
           AVATAR=$(jq -r '.avatar_url' user.json)
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
+          
+          # Contar commits, PRs e Issues
           COMMITS=$(jq '[.[] | select(.type=="PushEvent")] | length' events.json)
           PRS=$(jq '[.[] | select(.type=="PullRequestEvent")] | length' events.json)
           ISSUES=$(jq '[.[] | select(.type=="IssuesEvent")] | length' events.json)
 
+          # Calcular XP e Level
           TOTAL_XP=$((REPOS * 50 + FOLLOWERS * 30 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
           LEVEL=$((TOTAL_XP / 1000 + 1))
-          XP_PERCENTAGE=$(( (TOTAL_XP % 1000) * 100 / 1000 ))
+          XP_REMAINING=$((TOTAL_XP % 1000))
+          XP_PERCENTAGE=$((XP_REMAINING * 100 / 1000))
 
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
+          echo "repos=$REPOS" >> $GITHUB_OUTPUT
+          echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
+          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+          echo "prs=$PRS" >> $GITHUB_OUTPUT
+          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
           echo "total_xp=$TOTAL_XP" >> $GITHUB_OUTPUT
           echo "level=$LEVEL" >> $GITHUB_OUTPUT
           echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
@@ -53,29 +80,103 @@ jobs:
       - name: 🎨 Gerar Cartão SVG Recheado
         run: |
           mkdir -p cards
-          DATE=$(date +'%d/%m/%Y')
+          DATE=$(date +'%d/%m/%Y %H:%M')
 
           AVATAR="${{ steps.fetch-data.outputs.avatar }}"
           LOGIN="${{ steps.fetch-data.outputs.login }}"
           LEVEL="${{ steps.fetch-data.outputs.level }}"
-          XP="${{ steps.fetch-data.outputs.xp_percentage }}"
+          XP_PERCENTAGE="${{ steps.fetch-data.outputs.xp_percentage }}"
+          REPOS="${{ steps.fetch-data.outputs.repos }}"
+          FOLLOWERS="${{ steps.fetch-data.outputs.followers }}"
+          COMMITS="${{ steps.fetch-data.outputs.commits }}"
+          PRS="${{ steps.fetch-data.outputs.prs }}"
+          ISSUES="${{ steps.fetch-data.outputs.issues }}"
+          TOTAL_XP="${{ steps.fetch-data.outputs.total_xp }}"
 
-          echo '<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300">' > cards/ciconha.svg
-          echo '<rect width="460" height="300" rx="20" fill="#f0f4f8" stroke="#4a90e2" stroke-width="4"/>' >> cards/ciconha.svg
-          echo "<image href='${AVATAR}' x='20' y='20' width='80' height='80' clip-path='circle(40px at 40px 40px)'/>" >> cards/ciconha.svg
-          echo "<text x='120' y='50' font-size='22' font-weight='bold'>${LOGIN}</text>" >> cards/ciconha.svg
-          echo "<text x='120' y='75' font-size='14'>Nv. ${LEVEL} • 🚀 Lenda Fullstack</text>" >> cards/ciconha.svg
-          echo "<text x='120' y='95' font-size='12'>FULLSTACK • INSS • 20 anos</text>" >> cards/ciconha.svg
-          echo "<rect x='120' y='110' width='300' height='15' rx='8' fill='#ddd'/>" >> cards/ciconha.svg
-          echo "<rect x='120' y='110' width='${XP*3}' height='15' rx='8' fill='#4caf50'/>" >> cards/ciconha.svg
-          echo "<text x='270' y='123' font-size='11' text-anchor='middle'>XP: ${XP}%</text>" >> cards/ciconha.svg
-          echo "<text x='230' y='280' text-anchor='middle' font-size='11'>Gerado em ${DATE}</text>" >> cards/ciconha.svg
-          echo '</svg>' >> cards/ciconha.svg
+          # Gerar SVG com barra de XP dinâmica
+          cat > cards/ciconha.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280">
+            <!-- Fundo do cartão -->
+            <rect width="500" height="280" rx="15" fill="#1a1a2e" stroke="#4a90e2" stroke-width="3"/>
+            
+            <!-- Header com gradiente -->
+            <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#16213e" />
+              <stop offset="100%" stop-color="#0f3460" />
+            </linearGradient>
+            <rect width="500" height="80" rx="15" fill="url(#headerGradient)"/>
+            
+            <!-- Avatar -->
+            <defs>
+              <clipPath id="avatarClip">
+                <circle cx="60" cy="60" r="35"/>
+              </clipPath>
+            </defs>
+            <image href="${AVATAR}" x="25" y="25" width="70" height="70" clip-path="url(#avatarClip)"/>
+            
+            <!-- Informações do usuário -->
+            <text x="120" y="40" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
+              ${LOGIN}
+            </text>
+            <text x="120" y="60" font-family="Arial, sans-serif" font-size="12" fill="#e0e0e0">
+              Nv. ${LEVEL} • 🚀 Lenda Fullstack
+            </text>
+            <text x="120" y="75" font-family="Arial, sans-serif" font-size="10" fill="#b0b0b0">
+              FULLSTACK • INSS • 20 anos
+            </text>
+            
+            <!-- Barra de XP -->
+            <text x="25" y="110" font-family="Arial, sans-serif" font-size="11" fill="#e0e0e0">
+              PROGRESSO DE XP: ${TOTAL_XP} pontos
+            </text>
+            <rect x="25" y="115" width="450" height="20" rx="10" fill="#2d3748"/>
+            <rect x="25" y="115" width="${XP_PERCENTAGE * 4.5}" height="20" rx="10" fill="#4caf50"/>
+            <text x="250" y="129" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffffff" font-weight="bold">
+              ${XP_PERCENTAGE}% • Nível ${LEVEL}
+            </text>
+            
+            <!-- Estatísticas -->
+            <g transform="translate(25, 150)">
+              <!-- Linha 1 -->
+              <rect x="0" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
+              <text x="50" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">REPOS</text>
+              <text x="50" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#4caf50" font-weight="bold">${REPOS}</text>
+              
+              <rect x="120" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
+              <text x="170" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">SEGUIDORES</text>
+              <text x="170" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#2196f3" font-weight="bold">${FOLLOWERS}</text>
+              
+              <rect x="240" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
+              <text x="290" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">COMMITS</text>
+              <text x="290" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ff9800" font-weight="bold">${COMMITS}</text>
+              
+              <!-- Linha 2 -->
+              <rect x="0" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
+              <text x="50" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">PULL REQUESTS</text>
+              <text x="50" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#e91e63" font-weight="bold">${PRS}</text>
+              
+              <rect x="120" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
+              <text x="170" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">ISSUES</text>
+              <text x="170" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#9c27b0" font-weight="bold">${ISSUES}</text>
+              
+              <rect x="240" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
+              <text x="290" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">TOTAL XP</text>
+              <text x="290" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffeb3b" font-weight="bold">${TOTAL_XP}</text>
+            </g>
+            
+            <!-- Footer -->
+            <text x="250" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#888">
+              Gerado em ${DATE} • Guild Workflow
+            </text>
+          </svg>
+          EOF
 
-      - name: 💾 Commit e Push
+          echo "✅ Cartão SVG gerado com sucesso para ciconha!"
+
+      - name: 💾 Commit e Push do Cartão
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git add cards/
-          git commit -m "🧙‍♂️ Cartão da guilda gerado para ciconha" || echo "Nada para commitar"
+          git commit -m "🧙‍♂️ Cartão da guilda atualizado para ciconha" || echo "Nenhuma alteração para commitar"
           git push
