@@ -1,9 +1,7 @@
-name: 🏰 Guild Metrics Card
+name: 🏰 Guild Card Generator
 
 on:
-  schedule:
-    - cron: "0 0 * * *"  # Diariamente à meia-noite
-  workflow_dispatch:      # Execução manual
+  workflow_dispatch:
     inputs:
       username:
         description: "GitHub username"
@@ -14,398 +12,76 @@ permissions:
   contents: write
 
 jobs:
-  generate-guild-card:
+  gerar-cartao:
     runs-on: ubuntu-latest
-    env:
-      USERNAME: ${{ github.event.inputs.username || 'ciconha' }}
-      TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
     steps:
       - name: 🧩 Checkout do repositório
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📦 Instalar dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl jq bc
+          sudo apt-get install -y curl jq
 
-      - name: 🔍 Coletar dados completos
-        id: collect-data
+      - name: 🔍 Buscar dados do GitHub
+        id: dados
         run: |
-          USER="$USERNAME"
-          echo "📊 Coletando dados para: $USER"
+          USER="${{ github.event.inputs.username }}"
+          curl -s "https://api.github.com/users/$USER" > user.json
 
-          # Dados do usuário
-          curl -s -H "Authorization: token $TOKEN" \
-            "https://api.github.com/users/$USER" > user.json
-          
-          # Repositórios (mais populares)
-          curl -s -H "Authorization: token $TOKEN" \
-            "https://api.github.com/users/$USER/repos?sort=stars&per_page=50&type=all" > repos.json
-          
-          # Eventos (contribuições)
-          curl -s -H "Authorization: token $TOKEN" \
-            "https://api.github.com/users/$USER/events?per_page=100" > events.json
-          
-          # Stars dados
-          curl -s -H "Authorization: token $TOKEN" \
-            "https://api.github.com/users/$USER/starred?per_page=100" > starred.json
-
-          # Dados básicos
           LOGIN=$(jq -r '.login' user.json)
-          AVATAR=$(jq -r '.avatar_url' user.json)
           NAME=$(jq -r '.name // .login' user.json)
-          BIO=$(jq -r '.bio // "Developer" | sub("[:\\n]"; " "; "g")' user.json)
+          BIO=$(jq -r '.bio // "Desbravador da Guilda"' user.json)
+          AVATAR=$(jq -r '.avatar_url' user.json)
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
-          FOLLOWING=$(jq -r '.following' user.json)
-          CREATED_AT=$(jq -r '.created_at' user.json | cut -d'T' -f1)
+          CREATED=$(jq -r '.created_at' user.json | cut -d'T' -f1)
 
-          # Contribuições
-          COMMITS=$(jq '[.[] | select(.type=="PushEvent")] | length' events.json)
-          PRS=$(jq '[.[] | select(.type=="PullRequestEvent")] | length' events.json)
-          ISSUES=$(jq '[.[] | select(.type=="IssuesEvent")] | length' events.json)
-          
-          # Total de stars recebidas
-          TOTAL_STARS=$(jq 'reduce .[].stargazers_count as $star (0; . + $star)' repos.json)
-          
-          # Projetos top (2 mais populares)
-          jq 'sort_by(-.stargazers_count) | [.[0], .[1]]' repos.json > top_repos.json
-          
-          REPO1_NAME=$(jq -r '.[0].name // "N/A"' top_repos.json)
-          REPO1_STARS=$(jq -r '.[0].stargazers_count // 0' top_repos.json)
-          REPO1_LANG=$(jq -r '.[0].language // "N/A"' top_repos.json)
-          REPO1_DESC=$(jq -r '.[0].description // "Sem descrição" | .[0:40]' top_repos.json)
-
-          REPO2_NAME=$(jq -r '.[1].name // "N/A"' top_repos.json)
-          REPO2_STARS=$(jq -r '.[1].stargazers_count // 0' top_repos.json)
-          REPO2_LANG=$(jq -r '.[1].language // "N/A"' top_repos.json)
-          REPO2_DESC=$(jq -r '.[1].description // "Sem descrição" | .[0:40]' top_repos.json)
-
-          # Calcular classe/rank baseado em múltiplos fatores
-          REPO_SCORE=$((REPOS * 2))
-          SOCIAL_SCORE=$((FOLLOWERS * 3))
-          CONTRIB_SCORE=$((COMMITS + PRS * 2 + ISSUES * 2))
-          STAR_SCORE=$((TOTAL_STARS / 10))
-          
-          TOTAL_SCORE=$((REPO_SCORE + SOCIAL_SCORE + CONTRIB_SCORE + STAR_SCORE))
-
-          # Sistema de classes
-          if [ $TOTAL_SCORE -lt 100 ]; then
-            CLASS="🌱 Novato"
-            LEVEL=1
-            COLOR="#48bb78"
-          elif [ $TOTAL_SCORE -lt 300 ]; then
-            CLASS="🚀 Iniciante" 
-            LEVEL=2
-            COLOR="#4299e1"
-          elif [ $TOTAL_SCORE -lt 600 ]; then
-            CLASS="💻 Programador"
-            LEVEL=3
-            COLOR="#9f7aea"
-          elif [ $TOTAL_SCORE -lt 1000 ]; then
-            CLASS="🔥 Avançado"
-            LEVEL=4
-            COLOR="#ed8936"
-          elif [ $TOTAL_SCORE -lt 1500 ]; then
-            CLASS="⚡ Expert"
-            LEVEL=5
-            COLOR="#f56565"
-          else
-            CLASS="🏆 Lenda"
-            LEVEL=6
-            COLOR="#f6e05e"
-          fi
-
-          # Progresso para próximo nível
-          case $LEVEL in
-            1) NEXT_LEVEL=100;;
-            2) NEXT_LEVEL=300;;
-            3) NEXT_LEVEL=600;;
-            4) NEXT_LEVEL=1000;;
-            5) NEXT_LEVEL=1500;;
-            6) NEXT_LEVEL=9999;;
-          esac
-
-          case $LEVEL in
-            1) CURRENT_MIN=0;;
-            2) CURRENT_MIN=100;;
-            3) CURRENT_MIN=300;;
-            4) CURRENT_MIN=600;;
-            5) CURRENT_MIN=1000;;
-            6) CURRENT_MIN=1500;;
-          esac
-
-          LEVEL_RANGE=$((NEXT_LEVEL - CURRENT_MIN))
-          CURRENT_PROGRESS=$((TOTAL_SCORE - CURRENT_MIN))
-          PROGRESS_PERCENT=$((CURRENT_PROGRESS * 100 / LEVEL_RANGE))
-
-          if [ $PROGRESS_PERCENT -gt 100 ]; then
-            PROGRESS_PERCENT=100
-          fi
-
-          echo "=== MÉTRICAS CALCULADAS ==="
-          echo "🎯 Score Total: $TOTAL_SCORE"
-          echo "🏅 Classe: $CLASS (Nível $LEVEL)"
-          echo "📈 Progresso: $PROGRESS_PERCENT%"
-          echo "⭐ Stars totais: $TOTAL_STARS"
-          echo "💾 Commits: $COMMITS"
-          echo "🔀 PRs: $PRS"
-
-          # Exportar dados
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
-          echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "bio=$BIO" >> $GITHUB_OUTPUT
+          echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
           echo "repos=$REPOS" >> $GITHUB_OUTPUT
           echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
-          echo "following=$FOLLOWING" >> $GITHUB_OUTPUT
-          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
-          echo "prs=$PRS" >> $GITHUB_OUTPUT
-          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
-          echo "total_stars=$TOTAL_STARS" >> $GITHUB_OUTPUT
-          echo "created_at=$CREATED_AT" >> $GITHUB_OUTPUT
-          echo "class=$CLASS" >> $GITHUB_OUTPUT
-          echo "level=$LEVEL" >> $GITHUB_OUTPUT
-          echo "progress_percent=$PROGRESS_PERCENT" >> $GITHUB_OUTPUT
-          echo "next_level=$NEXT_LEVEL" >> $GITHUB_OUTPUT
-          echo "total_score=$TOTAL_SCORE" >> $GITHUB_OUTPUT
-          echo "class_color=$COLOR" >> $GITHUB_OUTPUT
-          echo "repo1_name=$REPO1_NAME" >> $GITHUB_OUTPUT
-          echo "repo1_stars=$REPO1_STARS" >> $GITHUB_OUTPUT
-          echo "repo1_lang=$REPO1_LANG" >> $GITHUB_OUTPUT
-          echo "repo1_desc=$REPO1_DESC" >> $GITHUB_OUTPUT
-          echo "repo2_name=$REPO2_NAME" >> $GITHUB_OUTPUT
-          echo "repo2_stars=$REPO2_STARS" >> $GITHUB_OUTPUT
-          echo "repo2_lang=$REPO2_LANG" >> $GITHUB_OUTPUT
-          echo "repo2_desc=$REPO2_DESC" >> $GITHUB_OUTPUT
+          echo "created=$CREATED" >> $GITHUB_OUTPUT
 
-      - name: 🎨 Gerar SVG estilo Metrics
+      - name: 🎨 Gerar SVG do Cartão
         run: |
-          mkdir -p metrics
+          mkdir -p cards
           DATE=$(date +'%d/%m/%Y')
 
-          # Variáveis
-          AVATAR_URL="${{ steps.collect-data.outputs.avatar }}"
-          USER_NAME="${{ steps.collect-data.outputs.name }}"
-          USER_LOGIN="${{ steps.collect-data.outputs.login }}"
-          USER_BIO="${{ steps.collect-data.outputs.bio }}"
-          USER_CLASS="${{ steps.collect-data.outputs.class }}"
-          USER_LEVEL="${{ steps.collect-data.outputs.level }}"
-          PROGRESS_PCT="${{ steps.collect-data.outputs.progress_percent }}"
-          TOTAL_SCORE="${{ steps.collect-data.outputs.total_score }}"
-          NEXT_LEVEL="${{ steps.collect-data.outputs.next_level }}"
-          CLASS_COLOR="${{ steps.collect-data.outputs.class_color }}"
+          LOGIN="${{ steps.dados.outputs.login }}"
+          NAME="${{ steps.dados.outputs.name }}"
+          BIO="${{ steps.dados.outputs.bio }}"
+          AVATAR="${{ steps.dados.outputs.avatar }}"
+          REPOS="${{ steps.dados.outputs.repos }}"
+          FOLLOWERS="${{ steps.dados.outputs.followers }}"
+          CREATED="${{ steps.dados.outputs.created }}"
 
-          # Estatísticas
-          REPOS_COUNT="${{ steps.collect-data.outputs.repos }}"
-          FOLLOWERS_COUNT="${{ steps.collect-data.outputs.followers }}"
-          FOLLOWING_COUNT="${{ steps.collect-data.outputs.following }}"
-          COMMITS_COUNT="${{ steps.collect-data.outputs.commits }}"
-          PRS_COUNT="${{ steps.collect-data.outputs.prs }}"
-          ISSUES_COUNT="${{ steps.collect-data.outputs.issues }}"
-          STARS_COUNT="${{ steps.collect-data.outputs.total_stars }}"
+          cat > cards/$LOGIN.svg <<EOF
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="200">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #fff; }
+    .text { font: 14px sans-serif; fill: #ccc; }
+    .label { font: 12px sans-serif; fill: #999; }
+  </style>
+  <rect width="100%" height="100%" fill="#1a1a2e"/>
+  <image href="$AVATAR" x="20" y="20" width="60" height="60" />
+  <text x="100" y="40" class="title">$NAME</text>
+  <text x="100" y="65" class="text">@${LOGIN}</text>
+  <text x="100" y="85" class="label">$BIO</text>
+  <text x="20" y="120" class="text">📦 Repositórios: $REPOS</text>
+  <text x="20" y="140" class="text">👥 Seguidores: $FOLLOWERS</text>
+  <text x="20" y="160" class="text">📅 Desde: $CREATED</text>
+  <text x="250" y="190" class="label">Gerado em $DATE • GuildCard</text>
+</svg>
+EOF
 
-          # Projetos
-          REPO1_NAME="${{ steps.collect-data.outputs.repo1_name }}"
-          REPO1_STARS="${{ steps.collect-data.outputs.repo1_stars }}"
-          REPO1_LANG="${{ steps.collect-data.outputs.repo1_lang }}"
-          REPO1_DESC="${{ steps.collect-data.outputs.repo1_desc }}"
-
-          REPO2_NAME="${{ steps.collect-data.outputs.repo2_name }}"
-          REPO2_STARS="${{ steps.collect-data.outputs.repo2_stars }}"
-          REPO2_LANG="${{ steps.collect-data.outputs.repo2_lang }}"
-          REPO2_DESC="${{ steps.collect-data.outputs.repo2_desc }}"
-
-          # Largura da barra de progresso
-          BAR_WIDTH=$((PROGRESS_PCT * 4))
-
-          cat > metrics/guild-metrics.svg << 'EOF'
-          <svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280">
-            <defs>
-              <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#1a1a2e"/>
-                <stop offset="100%" stop-color="#16213e"/>
-              </linearGradient>
-              <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#0f3460"/>
-                <stop offset="100%" stop-color="#533483"/>
-              </linearGradient>
-              <clipPath id="avatarClip">
-                <circle cx="45" cy="45" r="35"/>
-              </clipPath>
-            </defs>
-
-            <!-- Fundo -->
-            <rect width="500" height="280" rx="15" fill="url(#bgGradient)"/>
-            
-            <!-- Header -->
-            <rect width="500" height="90" rx="15" fill="url(#headerGradient)"/>
-            
-            <!-- Avatar -->
-            <image href="${AVATAR_URL}" x="15" y="15" width="70" height="70" clip-path="url(#avatarClip)"/>
-
-            <!-- Informações do usuário -->
-            <text x="100" y="35" font-family="'Segoe UI', Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
-              ${USER_NAME}
-            </text>
-            <text x="100" y="55" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#e2e8f0">
-              @${USER_LOGIN}
-            </text>
-            <text x="100" y="72" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#a0aec0">
-              ${USER_BIO}
-            </text>
-
-            <!-- Classe e Level -->
-            <g transform="translate(350, 25)">
-              <rect width="130" height="50" rx="10" fill="rgba(255,255,255,0.1)"/>
-              <text x="65" y="20" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="${CLASS_COLOR}">
-                ${USER_CLASS}
-              </text>
-              <text x="65" y="35" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="10" fill="#ffffff">
-                Nível ${USER_LEVEL}
-              </text>
-            </g>
-
-            <!-- Barra de Progresso -->
-            <g transform="translate(25, 105)">
-              <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="11" font-weight="bold" fill="#e2e8f0">
-                PROGRESSO • ${TOTAL_SCORE}/${NEXT_LEVEL} pontos
-              </text>
-              <rect x="0" y="10" width="450" height="15" rx="7" fill="#2d3748"/>
-              <rect x="0" y="10" width="${BAR_WIDTH}" height="15" rx="7" fill="${CLASS_COLOR}"/>
-              <text x="225" y="21" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#ffffff" font-weight="bold">
-                ${PROGRESS_PCT}%
-              </text>
-            </g>
-
-            <!-- Métricas principais -->
-            <g transform="translate(25, 135)">
-              <rect width="450" height="60" rx="10" fill="rgba(255,255,255,0.05)"/>
-              
-              <!-- Linha 1 -->
-              <g transform="translate(20, 15)">
-                <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#48bb78">
-                  ${REPOS_COUNT}
-                </text>
-                <text x="0" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#a0aec0">
-                  Repos
-                </text>
-              </g>
-
-              <g transform="translate(100, 15)">
-                <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#4299e1">
-                  ${FOLLOWERS_COUNT}
-                </text>
-                <text x="0" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#a0aec0">
-                  Seguidores
-                </text>
-              </g>
-
-              <g transform="translate(180, 15)">
-                <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#ed8936">
-                  ${COMMITS_COUNT}
-                </text>
-                <text x="0" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#a0aec0">
-                  Commits
-                </text>
-              </g>
-
-              <g transform="translate(260, 15)">
-                <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#9f7aea">
-                  ${PRS_COUNT}
-                </text>
-                <text x="0" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#a0aec0">
-                  PRs
-                </text>
-              </g>
-
-              <!-- Linha 2 -->
-              <g transform="translate(340, 15)">
-                <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#f56565">
-                  ${STARS_COUNT}
-                </text>
-                <text x="0" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#a0aec0">
-                  Stars
-                </text>
-              </g>
-
-              <g transform="translate(20, 40)">
-                <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#f6e05e">
-                  ${ISSUES_COUNT}
-                </text>
-                <text x="0" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#a0aec0">
-                  Issues
-                </text>
-              </g>
-
-              <g transform="translate(100, 40)">
-                <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#38b2ac">
-                  ${FOLLOWING_COUNT}
-                </text>
-                <text x="0" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#a0aec0">
-                  Seguindo
-                </text>
-              </g>
-            </g>
-
-            <!-- Projetos em Destaque -->
-            <g transform="translate(25, 210)">
-              <text x="0" y="0" font-family="'Segoe UI', Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff">
-                ⭐ PROJETOS POPULARES
-              </text>
-
-              <!-- Projeto 1 -->
-              <g transform="translate(0, 15)">
-                <rect width="220" height="40" rx="8" fill="rgba(255,255,255,0.03)"/>
-                <text x="10" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="10" font-weight="bold" fill="#ffffff">
-                  ${REPO1_NAME}
-                </text>
-                <text x="10" y="28" font-family="'Segoe UI', Arial, sans-serif" font-size="8" fill="#a0aec0">
-                  ${REPO1_LANG} • ${REPO1_STARS} stars
-                </text>
-              </g>
-
-              <!-- Projeto 2 -->
-              <g transform="translate(230, 15)">
-                <rect width="220" height="40" rx="8" fill="rgba(255,255,255,0.03)"/>
-                <text x="10" y="15" font-family="'Segoe UI', Arial, sans-serif" font-size="10" font-weight="bold" fill="#ffffff">
-                  ${REPO2_NAME}
-                </text>
-                <text x="10" y="28" font-family="'Segoe UI', Arial, sans-serif" font-size="8" fill="#a0aec0">
-                  ${REPO2_LANG} • ${REPO2_STARS} stars
-                </text>
-              </g>
-            </g>
-
-            <!-- Footer -->
-            <text x="250" y="275" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="9" fill="#718096">
-              🏢 INSS • 🎯 Fullstack • 📅 ${DATE} • guild.metrics
-            </text>
-          </svg>
-          EOF
-
-          echo "✅ SVG estilo Metrics gerado: metrics/guild-metrics.svg"
-
-      - name: 💾 Commit e upload
+      - name: 💾 Commit e Push
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          
-          git add metrics/
-          if git diff --staged --quiet; then
-            echo "ℹ️ Nenhuma mudança para commitar"
-          else
-            git commit -m "📊 Atualizar métricas Guild para $USERNAME"
-            git push
-            echo "✅ Métricas atualizadas"
-          fi
-
-      - name: 🚀 Upload como artefato
-        uses: actions/upload-artifact@v4
-        with:
-          name: guild-metrics
-          path: metrics/
-          retention-days: 7
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add cards/
+          git commit -m "🧙‍♂️ Cartão gerado para ${{ github.event.inputs.username }}"
+          git push
