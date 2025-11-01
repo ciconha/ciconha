@@ -36,7 +36,7 @@
   <text x="150" y="80" class="subtitle">Nv. 2 - 32 ano (3) no GH-131923066</text>
   
   <!-- Barra de XP -->
-  <text x="150" y="100" class="xp-text">1852 XP • 85% para o próximo nível</text>
+  <text x="150" y="100" class="xp-text">1856 XP • 85% para o próximo nível</text>
   <rect x="150" y="105" width="200" height="8" fill="#E0E0E0" rx="4" ry="4"/>
   <rect x="150" y="105" width="170" height="8" fill="url(#xpGradient)" rx="4" ry="4"/>
   
@@ -46,7 +46,7 @@
   <text x="150" y="155" class="stat">• Capacidade: 3</text>
   
   <!-- Atividades -->
-  <text x="150" y="175" class="subtitle">Atividades: 61 commits + 0 PRs + 8 issues</text>
+  <text x="150" y="175" class="subtitle">Atividades: 63 commits + 0 PRs + 8 issues</text>
   
   <!-- Projetos Destacados -->
   <text x="30" y="200" class="title">Projetos Destacados:</text>
