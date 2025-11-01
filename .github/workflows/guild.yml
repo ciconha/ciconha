@@ -28,8 +28,6 @@ jobs:
         id: fetch-data
         run: |
           USER="${{ github.event.inputs.usuario }}"
-
-          echo "🔍 Buscando dados de $USER..."
           curl -s "https://api.github.com/users/$USER" > user.json
           curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
           curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
@@ -52,17 +50,26 @@ jobs:
           echo "level=$LEVEL" >> $GITHUB_OUTPUT
           echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
 
-      - name: 🎨 Gerar Cartão SVG
+      - name: 🎨 Gerar Cartão SVG Recheado
         run: |
           mkdir -p cards
           DATE=$(date +'%d/%m/%Y')
 
+          AVATAR="${{ steps.fetch-data.outputs.avatar }}"
+          LOGIN="${{ steps.fetch-data.outputs.login }}"
+          LEVEL="${{ steps.fetch-data.outputs.level }}"
+          XP="${{ steps.fetch-data.outputs.xp_percentage }}"
+
           echo '<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300">' > cards/ciconha.svg
-          echo '<rect width="460" height="300" rx="15" fill="beige" stroke="#8B4513" stroke-width="3"/>' >> cards/ciconha.svg
-          echo "<text x='130' y='60' font-size='20' font-weight='bold'>${{ steps.fetch-data.outputs.login }}</text>" >> cards/ciconha.svg
-          echo "<text x='130' y='80' font-size='12'>Nv. ${{ steps.fetch-data.outputs.level }} • 🚀 Lenda Fullstack</text>" >> cards/ciconha.svg
-          echo "<text x='130' y='100' font-size='11'>FULLSTACK • INSS • 20 anos</text>" >> cards/ciconha.svg
-          echo "<text x='230' y='270' text-anchor='middle' font-size='11'>Gerado em ${DATE}</text>" >> cards/ciconha.svg
+          echo '<rect width="460" height="300" rx="20" fill="#f0f4f8" stroke="#4a90e2" stroke-width="4"/>' >> cards/ciconha.svg
+          echo "<image href='${AVATAR}' x='20' y='20' width='80' height='80' clip-path='circle(40px at 40px 40px)'/>" >> cards/ciconha.svg
+          echo "<text x='120' y='50' font-size='22' font-weight='bold'>${LOGIN}</text>" >> cards/ciconha.svg
+          echo "<text x='120' y='75' font-size='14'>Nv. ${LEVEL} • 🚀 Lenda Fullstack</text>" >> cards/ciconha.svg
+          echo "<text x='120' y='95' font-size='12'>FULLSTACK • INSS • 20 anos</text>" >> cards/ciconha.svg
+          echo "<rect x='120' y='110' width='300' height='15' rx='8' fill='#ddd'/>" >> cards/ciconha.svg
+          echo "<rect x='120' y='110' width='${XP*3}' height='15' rx='8' fill='#4caf50'/>" >> cards/ciconha.svg
+          echo "<text x='270' y='123' font-size='11' text-anchor='middle'>XP: ${XP}%</text>" >> cards/ciconha.svg
+          echo "<text x='230' y='280' text-anchor='middle' font-size='11'>Gerado em ${DATE}</text>" >> cards/ciconha.svg
           echo '</svg>' >> cards/ciconha.svg
 
       - name: 💾 Commit e Push
