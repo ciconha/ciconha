@@ -1,4 +1,4 @@
-name: 🛡️ Card Guild
+name: 🛡️ Card Guild (Dark Red Edition)
 
 on:
   schedule:
@@ -10,13 +10,13 @@ on:
         required: true
         default: 'ciconha'
       empresa:
-        description: 'Empresa do usuário'
+        description: 'Nome da empresa (ex: TechLabs Studio)'
         required: false
         default: 'Independente'
       cargo:
-        description: 'Cargo atual'
+        description: 'Cargo atual (ex: Desenvolvedor Back-end)'
         required: false
-        default: 'Desenvolvedor'
+        default: 'Aventureiro de Código'
 
 permissions:
   contents: write
@@ -39,26 +39,24 @@ jobs:
         run: |
           USER="${{ github.event.inputs.usuario }}"
           TOKEN="${{ secrets.TSUKUYOMI_CICONHA }}"
-          EMPRESA="${{ github.event.inputs.empresa }}"
-          CARGO="${{ github.event.inputs.cargo }}"
 
           echo "📡 Coletando dados do usuário: $USER"
 
-          # Buscar informações principais (sem necessidade de token)
-          curl -s "https://api.github.com/users/$USER" > user.json
+          # Buscar informações principais
+          curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER" > user.json
 
-          # Buscar repositórios
-          curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
+          # Buscar repositórios (ordenados por estrelas)
+          curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
 
-          # Buscar eventos
-          curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
+          # Buscar eventos recentes
+          curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER/events?per_page=100" > events.json
 
           sanitize() {
             echo "$1" | iconv -c -t UTF-8//TRANSLIT | tr -d '\n' | sed 's/"/\\"/g'
           }
 
           LOGIN=$(sanitize "$(jq -r '.login' user.json)")
-          AVATAR_URL="https://github.com/$LOGIN.png"
+          AVATAR=$(sanitize "$(jq -r '.avatar_url' user.json)")
           NAME=$(sanitize "$(jq -r '.name // "Usuário Desconhecido"' user.json)")
           BIO=$(sanitize "$(jq -r '.bio // "Desenvolvedor apaixonado por tecnologia."' user.json)")
           REPOS=$(jq -r '.public_repos' user.json)
@@ -93,10 +91,8 @@ jobs:
           jq 'sort_by(-.stargazers_count) | .[0:2] | .[] | {name: .name, description: (.description // "Sem descrição"), stars: .stargazers_count}' repos.json > top_projects.json
 
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
-          echo "avatar=$AVATAR_URL" >> $GITHUB_OUTPUT
+          echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
-          echo "empresa=$EMPRESA" >> $GITHUB_OUTPUT
-          echo "cargo=$CARGO" >> $GITHUB_OUTPUT
           echo "bio=$BIO" >> $GITHUB_OUTPUT
           echo "repos=$REPOS" >> $GITHUB_OUTPUT
           echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
@@ -109,10 +105,9 @@ jobs:
           echo "class=$CLASS" >> $GITHUB_OUTPUT
           echo "rank=$RANK" >> $GITHUB_OUTPUT
 
-      - name: 🎨 Gerar SVG Dark Red
+      - name: 🎨 Gerar SVG Dark Red com Avatar Circular
         run: |
           mkdir -p cards
-
           PROJECT1_NAME=$(jq -r '.name' top_projects.json | head -1)
           PROJECT1_DESC=$(jq -r '.description' top_projects.json | head -1)
           PROJECT1_STARS=$(jq -r '.stars' top_projects.json | head -1)
@@ -128,50 +123,48 @@ jobs:
             <defs>
               <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#0d0000"/>
-                <stop offset="100%" stop-color="#2b0000"/>
+                <stop offset="100%" stop-color="#330000"/>
               </linearGradient>
               <style>
-                .title { font-size: 22px; font-weight: bold; fill: #ff4d4d; }
-                .subtitle { font-size: 13px; fill: #ff9999; }
-                .text { font-size: 11px; fill: #ffcccc; }
-                .project-title { font-size: 11px; font-weight: bold; fill: #ffaaaa; }
-                .project-desc { font-size: 10px; fill: #ffbbbb; }
+                .title { font-size: 22px; font-weight: bold; fill: #FF4444; }
+                .subtitle { font-size: 13px; fill: #FF8888; }
+                .text { font-size: 11px; fill: #FFCCCC; }
+                .project-title { font-size: 11px; font-weight: bold; fill: #FFAAAA; }
+                .project-desc { font-size: 10px; fill: #FFBBBB; }
               </style>
             </defs>
 
-            <rect width="460" height="310" fill="url(#bgGradient)" rx="15" ry="15" stroke="#ff0000" stroke-width="3"/>
+            <rect width="460" height="310" fill="url(#bgGradient)" rx="15" ry="15" stroke="#FF0000" stroke-width="3"/>
 
-            <!-- Avatar -->
-            <clipPath id="avatarClip"><circle cx="75" cy="75" r="30"/></clipPath>
-            <image href="${{ steps.fetch-data.outputs.avatar }}" x="45" y="45" width="60" height="60" clip-path="url(#avatarClip)" />
+            <!-- Avatar Circular -->
+            <clipPath id="avatarClip"><circle cx="70" cy="75" r="30"/></clipPath>
+            <image href="${{ steps.fetch-data.outputs.avatar }}" x="40" y="45" width="60" height="60" clip-path="url(#avatarClip)" />
 
             <!-- Nome, empresa e cargo -->
             <text x="120" y="65" class="title">${{ steps.fetch-data.outputs.name }}</text>
-            <text x="120" y="85" class="subtitle">🏢 ${{
-              steps.fetch-data.outputs.empresa }} • 💼 ${{
-              steps.fetch-data.outputs.cargo }}</text>
+            <text x="120" y="85" class="subtitle">🏢 ${{ github.event.inputs.empresa }} • 💼 ${{ github.event.inputs.cargo }}</text>
             <text x="120" y="100" class="subtitle">⚔ ${{
-              steps.fetch-data.outputs.class }} (${{
-              steps.fetch-data.outputs.rank }})</text>
+              steps.fetch-data.outputs.class }} • 🩸 ${{
+              steps.fetch-data.outputs.rank }}</text>
 
             <text x="120" y="120" class="text">${{ steps.fetch-data.outputs.bio }}</text>
 
             <!-- XP -->
             <text x="120" y="140" class="text">Nível: ${{
-              steps.fetch-data.outputs.level }} • XP Total: ${{
+              steps.fetch-data.outputs.level }} • XP: ${{
               steps.fetch-data.outputs.total_xp }}</text>
-            <rect x="120" y="145" width="200" height="8" fill="#330000" rx="4" ry="4"/>
-            <rect x="120" y="145" width="$((200 * ${{ steps.fetch-data.outputs.xp_percentage }} / 100))" height="8" fill="#ff0000" rx="4" ry="4"/>
+            <rect x="120" y="145" width="200" height="8" fill="#220000" rx="4" ry="4"/>
+            <rect x="120" y="145" width="$((200 * ${{ steps.fetch-data.outputs.xp_percentage }} / 100))" height="8" fill="#FF2222" rx="4" ry="4"/>
 
             <!-- Projetos -->
-            <text x="30" y="185" class="subtitle">⭐ Projetos em destaque:</text>
-            <text x="30" y="205" class="project-title">• $PROJECT1_NAME</text>
-            <text x="30" y="220" class="project-desc">$PROJECT1_DESC</text>
-            <text x="30" y="235" class="project-desc">⭐ $PROJECT1_STARS estrelas</text>
+            <text x="30" y="180" class="subtitle">⭐ Projetos em destaque:</text>
+            <text x="30" y="200" class="project-title">• $PROJECT1_NAME</text>
+            <text x="30" y="215" class="project-desc">$PROJECT1_DESC</text>
+            <text x="30" y="230" class="project-desc">⭐ $PROJECT1_STARS estrelas</text>
 
-            <text x="240" y="205" class="project-title">• $PROJECT2_NAME</text>
-            <text x="240" y="220" class="project-desc">$PROJECT2_DESC</text>
-            <text x="240" y="235" class="project-desc">⭐ $PROJECT2_STARS estrelas</text>
+            <text x="240" y="200" class="project-title">• $PROJECT2_NAME</text>
+            <text x="240" y="215" class="project-desc">$PROJECT2_DESC</text>
+            <text x="240" y="230" class="project-desc">⭐ $PROJECT2_STARS estrelas</text>
 
             <!-- Rodapé -->
             <text x="230" y="295" text-anchor="middle" class="text">
@@ -183,14 +176,14 @@ jobs:
           </svg>
           EOF
 
-          echo "✅ Cartão SVG Dark Red gerado para ${{ github.event.inputs.usuario }}!"
+          echo "✅ SVG Dark Red gerado com sucesso para ${{ github.event.inputs.usuario }}!"
 
       - name: 💾 Commit e Push automático
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add cards/
-          git commit -m "🩸 Atualização automática do cartão da guilda para ${{ github.event.inputs.usuario }}" || echo "Nenhuma mudança detectada"
+          git commit -m "🩸 Atualização do cartão da guilda para ${{ github.event.inputs.usuario }}" || echo "Nenhuma mudança detectada"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.TSUKUYOMI_CICONHA }}
