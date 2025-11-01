@@ -1,4 +1,4 @@
-name: 🏰 Guild Card Generator
+name: guild
 
 on:
   workflow_dispatch:
