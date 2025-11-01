@@ -1,4 +1,4 @@
-name: guild Workflow
+name: Guild Card Generator
 
 on:
   workflow_dispatch:
@@ -7,24 +7,48 @@ on:
         description: "Usuário GitHub"
         required: true
         default: "ciconha"
+  schedule:
+    - cron: '0 0 * * 0'
 
 permissions:
   contents: write
 
 jobs:
-  gerar-cartao:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Gerar Cartão Guild
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install (no deps required)
         run: |
-          echo "Gerando cartão RPG para ciconha..."
-          echo "Estilo: fantasy"
-          echo "Layout: card"
-          echo "Área: backend"
-          echo "XP e Rank calculados automaticamente."
-      - name: Commit SVG
+          echo "No dependencies to install"
+
+      - name: Run generator
+        env:
+          USERNAME: ${{ github.event.inputs.usuario }}
+          CARD_STYLE: "cyberpunk"
+          CARD_SIZE: "large"
+          LAYOUT: "card"
+          AREA: "backend"
+          EMPRESA: "INSS"
+          IDADE: "20"
+          INCLUDE_STATS: "basic"
+          LANGUAGE: "pt"
+          PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN || '' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add .
-          git commit -m "🎴 Guild Card atualizado"
-          git push
+          node .github/scripts/generateCard.js
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add cards/ || true
+          git commit -m "🤖 Atualiza Guild Card para ${{ github.event.inputs.usuario }}" || echo "Nada para commitar"
+          git push || echo "Push falhou (verifique permissões)"
