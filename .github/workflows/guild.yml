@@ -1,10 +1,12 @@
 name: Guild Card SVG
 
 on:
+  schedule:
+    - cron: "0 0 * * *"  # Executa todo dia à meia-noite
   workflow_dispatch:
     inputs:
       usuario:
-        description: 'ciconha'
+        description: 'GitHub username'
         required: true
         default: 'ciconha'
 
@@ -27,59 +29,39 @@ jobs:
       - name: Buscar dados do GitHub
         id: fetch-data
         run: |
-          # Buscar dados do usuário
-          curl -s -H "Authorization: token ${{ secrets.TSUKUYOMI_CICONHA }}" \
-            "https://api.github.com/users/${{ github.event.inputs.usuario }}" > user.json
-          
-          # Buscar repositórios
-          curl -s -H "Authorization: token ${{ secrets.TSUKUYOMI_CICONHA }}" \
-            "https://api.github.com/users/${{ github.event.inputs.usuario }}/repos?sort=stars&per_page=100" > repos.json
-          
-          # Buscar eventos para commits, PRs e issues
-          curl -s -H "Authorization: token ${{ secrets.TSUKUYOMI_CICONHA }}" \
-            "https://api.github.com/users/${{ github.event.inputs.usuario }}/events?per_page=100" > events.json
-          
-          # Processar dados
+          USER="${{ github.event.inputs.usuario }}"
+          curl -s "https://api.github.com/users/$USER" > user.json
+          curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
+          curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
+
           LOGIN=$(jq -r '.login' user.json)
           AVATAR=$(jq -r '.avatar_url' user.json)
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
           USER_ID=$(jq -r '.id' user.json)
-          
-          # Calcular commits, PRs e issues dos eventos
+
           COMMITS=$(jq '[.[] | select(.type == "PushEvent")] | length' events.json)
           PRS=$(jq '[.[] | select(.type == "PullRequestEvent")] | length' events.json)
           ISSUES=$(jq '[.[] | select(.type == "IssuesEvent")] | length' events.json)
-          
-          # Calcular XP e nível
+
           TOTAL_XP=$((REPOS * 50 + FOLLOWERS * 30 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
           LEVEL=$((TOTAL_XP / 1000 + 1))
           XP_PERCENTAGE=$(( (TOTAL_XP % 1000) * 100 / 1000 ))
-          
-          # Buscar top 2 projetos com mais stars
+          XP_BAR=$(( 200 * XP_PERCENTAGE / 100 ))
+
+          TOTAL_STARS=$(jq '[.[] | .stargazers_count] | add' repos.json)
+
           jq 'sort_by(-.stargazers_count) | .[0:2] | .[] | {name: .name, description: (.description // "Sem descrição"), stars: .stargazers_count}' repos.json > top_projects.json
-          
-          # Determinar classe baseada no perfil
-          if [ $REPOS -gt 50 ]; then
-            CLASS="Arquiteto"
-          elif [ $FOLLOWERS -gt 100 ]; then
-            CLASS="Lenda"
-          elif [ $REPOS -gt 30 ] && [ $FOLLOWERS -gt 50 ]; then
-            CLASS="Mestre"
-          else
-            CLASS="Aventureiro"
-          fi
-          
-          # Determinar rank
-          if [ $REPOS -gt 100 ]; then
-            RANK="Lendário"
-          elif [ $REPOS -gt 50 ]; then
-            RANK="Épico"
-          else
-            RANK="Herói"
-          fi
-          
-          # Salvar todas as variáveis
+
+          if [ $REPOS -gt 50 ]; then CLASS="Arquiteto"
+          elif [ $FOLLOWERS -gt 100 ]; then CLASS="Lenda"
+          elif [ $REPOS -gt 30 ] && [ $FOLLOWERS -gt 50 ]; then CLASS="Mestre"
+          else CLASS="Aventureiro"; fi
+
+          if [ $REPOS -gt 100 ]; then RANK="Lendário"
+          elif [ $REPOS -gt 50 ]; then RANK="Épico"
+          else RANK="Herói"; fi
+
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
           echo "repos=$REPOS" >> $GITHUB_OUTPUT
@@ -91,99 +73,51 @@ jobs:
           echo "total_xp=$TOTAL_XP" >> $GITHUB_OUTPUT
           echo "level=$LEVEL" >> $GITHUB_OUTPUT
           echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
+          echo "xp_bar=$XP_BAR" >> $GITHUB_OUTPUT
           echo "class=$CLASS" >> $GITHUB_OUTPUT
           echo "rank=$RANK" >> $GITHUB_OUTPUT
+          echo "total_stars=$TOTAL_STARS" >> $GITHUB_OUTPUT
 
       - name: Gerar SVG do cartão
         run: |
           mkdir -p cards
-          
-          # Ler projetos do arquivo JSON
-          PROJECT1_NAME=$(jq -r '.name' top_projects.json | head -1)
-          PROJECT1_DESC=$(jq -r '.description' top_projects.json | head -1)
-          PROJECT1_STARS=$(jq -r '.stars' top_projects.json | head -1)
-          
-          PROJECT2_NAME=$(jq -r '.name' top_projects.json | tail -1)
-          PROJECT2_DESC=$(jq -r '.description' top_projects.json | tail -1)
-          PROJECT2_STARS=$(jq -r '.stars' top_projects.json | tail -1)
-          
-          # Data atual
-          CURRENT_DATE=$(date +'%d/%m/%Y')
-          
-          cat > cards/${{ github.event.inputs.usuario }}.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="450" height="280" viewBox="0 0 450 280">
-            <defs>
-              <style>
-                .card { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-                .title { font-size: 22px; font-weight: bold; fill: #8B4513; }
-                .subtitle { font-size: 14px; fill: #654321; }
-                .text { font-size: 12px; fill: #5D4037; }
-                .xp-text { font-size: 10px; fill: #795548; }
-                .project-title { font-size: 11px; font-weight: bold; fill: #5D4037; }
-                .project-desc { font-size: 10px; fill: #795548; }
-                .stat { font-size: 11px; fill: #5D4037; }
-              </style>
-              <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#F5F5DC" />
-                <stop offset="100%" stop-color="#DEB887" />
-              </linearGradient>
-              <linearGradient id="xpGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#FFD700" />
-                <stop offset="100%" stop-color="#FFA500" />
-              </linearGradient>
-            </defs>
-            
-            <!-- Fundo do cartão -->
-            <rect width="450" height="280" fill="url(#bgGradient)" rx="15" ry="15" stroke="#8B4513" stroke-width="3"/>
-            
-            <!-- Avatar -->
-            <defs>
-              <clipPath id="avatarClip">
-                <circle cx="75" cy="75" r="30"/>
-              </clipPath>
-            </defs>
-            <image href="${{ steps.fetch-data.outputs.avatar }}" x="45" y="45" width="60" height="60" clip-path="url(#avatarClip)"/>
-            
-            <!-- Informações principais -->
-            <text x="150" y="60" class="title">${{ steps.fetch-data.outputs.login }}</text>
-            <text x="150" y="80" class="subtitle">Nv. ${{ steps.fetch-data.outputs.level }} - ${{ steps.fetch-data.outputs.repos }} ano (${{ steps.fetch-data.outputs.followers }}) no GH-${{ steps.fetch-data.outputs.user_id }}</text>
-            
-            <!-- Barra de XP -->
-            <text x="150" y="100" class="xp-text">${{ steps.fetch-data.outputs.total_xp }} XP • ${{ steps.fetch-data.outputs.xp_percentage }}% para o próximo nível</text>
-            <rect x="150" y="105" width="200" height="8" fill="#E0E0E0" rx="4" ry="4"/>
-            <rect x="150" y="105" width="$(( 200 * ${{ steps.fetch-data.outputs.xp_percentage }} / 100 ))" height="8" fill="url(#xpGradient)" rx="4" ry="4"/>
-            
-            <!-- Status -->
-            <text x="150" y="125" class="stat">• Classe: ${{ steps.fetch-data.outputs.class }}</text>
-            <text x="150" y="140" class="stat">• Rank: ${{ steps.fetch-data.outputs.rank }}</text>
-            <text x="150" y="155" class="stat">• Capacidade: ${{ steps.fetch-data.outputs.followers }}</text>
-            
-            <!-- Atividades -->
-            <text x="150" y="175" class="subtitle">Atividades: ${{ steps.fetch-data.outputs.commits }} commits + ${{ steps.fetch-data.outputs.prs }} PRs + ${{ steps.fetch-data.outputs.issues }} issues</text>
-            
-            <!-- Projetos Destacados -->
-            <text x="30" y="200" class="title">Projetos Destacados:</text>
-            <text x="30" y="215" class="project-title">• $PROJECT1_NAME</text>
-            <text x="30" y="230" class="project-desc">$PROJECT1_DESC</text>
-            <text x="30" y="245" class="project-desc">⭐ $PROJECT1_STARS estrelas</text>
-            
-            <text x="230" y="215" class="project-title">• $PROJECT2_NAME</text>
-            <text x="230" y="230" class="project-desc">$PROJECT2_DESC</text>
-            <text x="230" y="245" class="project-desc">⭐ $PROJECT2_STARS estrelas</text>
-            
-            <!-- Rodapé -->
-            <text x="225" y="270" text-anchor="middle" class="text">Cartão da Guilda RPG • Gerado em $CURRENT_DATE</text>
-          </svg>
-          EOF
-          
-          echo "Cartão SVG gerado para ${{ github.event.inputs.usuario }}"
+          DATE=$(date +'%d/%m/%Y')
+
+          P1_NAME=$(jq -r '.name' top_projects.json | head -1)
+          P1_DESC=$(jq -r '.description' top_projects.json | head -1)
+          P1_STARS=$(jq -r '.stars' top_projects.json | head -1)
+
+          P2_NAME=$(jq -r '.name' top_projects.json | tail -1)
+          P2_DESC=$(jq -r '.description' top_projects.json | tail -1)
+          P2_STARS=$(jq -r '.stars' top_projects.json | tail -1)
+
+          cat > cards/${{ github.event.inputs.usuario }}.svg <<EOF
+<svg xmlns="http://www.w3.org/2000/svg" width="450" height="280">
+  <style>
+    .title { font: bold 20px sans-serif; fill: #333; }
+    .text { font: 14px sans-serif; fill: #555; }
+    .small { font: 12px sans-serif; fill: #777; }
+  </style>
+  <rect width="100%" height="100%" fill="#fdf6e3" stroke="#8b5e3c" stroke-width="3" rx="15"/>
+  <image href="${{ steps.fetch-data.outputs.avatar }}" x="20" y="20" width="60" height="60" clip-path="circle(30px at 50px 50px)"/>
+  <text x="100" y="40" class="title">${{ steps.fetch-data.outputs.login }}</text>
+  <text x="100" y="65" class="text">Nv. ${{ steps.fetch-data.outputs.level }} • ${{ steps.fetch-data.outputs.class }} • ${{ steps.fetch-data.outputs.rank }}</text>
+  <text x="100" y="85" class="small">Repositórios: ${{ steps.fetch-data.outputs.repos }} • Seguidores: ${{ steps.fetch-data.outputs.followers }}</text>
+  <text x="100" y="105" class="small">XP: ${{ steps.fetch-data.outputs.total_xp }} • ${{ steps.fetch-data.outputs.xp_percentage }}%</text>
+  <rect x="100" y="110" width="200" height="10" fill="#ddd" rx="5"/>
+  <rect x="100" y="110" width="${{ steps.fetch-data.outputs.xp_bar }}" height="10" fill="#4caf50" rx="5"/>
+  <text x="20" y="140" class="text">⭐ Total de estrelas: ${{ steps.fetch-data.outputs.total_stars }}</text>
+  <text x="20" y="160" class="title">Projetos em destaque:</text>
+  <text x="20" y="180" class="text">• $P1_NAME — $P1_DESC (${P1_STARS}⭐)</text>
+  <text x="20" y="200" class="text">• $P2_NAME — $P2_DESC (${P2_STARS}⭐)</text>
+  <text x="225" y="260" text-anchor="middle" class="small">Cartão da Guilda • $DATE</text>
+</svg>
+EOF
 
       - name: Commit e Push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add cards/
-          git commit -m "Cartão SVG da guilda gerado para ${{ github.event.inputs.usuario }}"
+          git commit -m "🧙‍♂️ Cartão SVG gerado para ${{ github.event.inputs.usuario }}"
           git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.TSUKUYOMI_CICONHA }}
