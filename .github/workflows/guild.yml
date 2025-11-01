@@ -32,15 +32,15 @@ jobs:
       - name: ⚙️ Instalar dependências
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y curl jq imagemagick
+          sudo apt-get install -y curl jq imagemagick moreutils
 
-      - name: 🔍 Buscar dados completos do GitHub
+      - name: 🔍 Buscar dados do GitHub
         id: fetch-data
         run: |
           USER="${{ github.event.inputs.usuario }}"
           TOKEN="${{ secrets.TSUKUYOMI_CICONHA }}"
 
-          echo "📡 Coletando dados completos do usuário: $USER"
+          echo "📡 Coletando dados do usuário: $USER"
 
           # Buscar informações principais
           curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER" > user.json
@@ -51,26 +51,25 @@ jobs:
           # Buscar eventos recentes
           curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER/events?per_page=100" > events.json
 
-          # Processar dados básicos
-          LOGIN=$(jq -r '.login' user.json)
-          AVATAR=$(jq -r '.avatar_url' user.json)
-          NAME=$(jq -r '.name // .login' user.json)
-          BIO=$(jq -r '.bio // "Desenvolvedor apaixonado por tecnologia."' user.json | sed 's/"/\\"/g')
+          sanitize() {
+            echo "$1" | iconv -c -t UTF-8//TRANSLIT | tr -d '\n' | sed 's/"/\\"/g'
+          }
+
+          LOGIN=$(sanitize "$(jq -r '.login' user.json)")
+          AVATAR=$(sanitize "$(jq -r '.avatar_url' user.json)")
+          NAME=$(sanitize "$(jq -r '.name // "Usuário Desconhecido"' user.json)")
+          BIO=$(sanitize "$(jq -r '.bio // "Desenvolvedor apaixonado por tecnologia."' user.json)")
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
-          FOLLOWING=$(jq -r '.following' user.json)
 
-          # Calcular contribuições
           COMMITS=$(jq '[.[] | select(.type == "PushEvent")] | length' events.json)
           PRS=$(jq '[.[] | select(.type == "PullRequestEvent")] | length' events.json)
           ISSUES=$(jq '[.[] | select(.type == "IssuesEvent")] | length' events.json)
 
-          # Calcular XP e Level
           TOTAL_XP=$((REPOS * 50 + FOLLOWERS * 30 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
           LEVEL=$((TOTAL_XP / 1000 + 1))
           XP_PERCENTAGE=$(( (TOTAL_XP % 1000) * 100 / 1000 ))
 
-          # Determinar classe baseada em repositórios
           if [ "$REPOS" -gt 50 ]; then
             CLASS="Arquiteto"
           elif [ "$FOLLOWERS" -gt 100 ]; then
@@ -81,7 +80,6 @@ jobs:
             CLASS="Aventureiro"
           fi
 
-          # Determinar rank
           if [ "$REPOS" -gt 100 ]; then
             RANK="Lendário"
           elif [ "$REPOS" -gt 50 ]; then
@@ -90,38 +88,14 @@ jobs:
             RANK="Herói"
           fi
 
-          # Buscar os 2 projetos mais populares com linguagens
-          jq 'sort_by(-.stargazers_count) | [.[0], .[1]]' repos.json > top_projects.json
+          jq 'sort_by(-.stargazers_count) | .[0:2] | .[] | {name: .name, description: (.description // "Sem descrição"), stars: .stargazers_count}' repos.json > top_projects.json
 
-          # Dados do projeto 1
-          REPO1_NAME=$(jq -r '.[0].name // "N/A"' top_projects.json)
-          REPO1_DESC=$(jq -r '.[0].description // "Sem descrição disponível"' top_projects.json | sed 's/"/\\"/g' | cut -c 1-60)
-          REPO1_STARS=$(jq -r '.[0].stargazers_count // 0' top_projects.json)
-          REPO1_LANG=$(jq -r '.[0].language // "N/A"' top_projects.json)
-          REPO1_FORKS=$(jq -r '.[0].forks_count // 0' top_projects.json)
-
-          # Dados do projeto 2
-          REPO2_NAME=$(jq -r '.[1].name // "N/A"' top_projects.json)
-          REPO2_DESC=$(jq -r '.[1].description // "Sem descrição disponível"' top_projects.json | sed 's/"/\\"/g' | cut -c 1-60)
-          REPO2_STARS=$(jq -r '.[1].stargazers_count // 0' top_projects.json)
-          REPO2_LANG=$(jq -r '.[1].language // "N/A"' top_projects.json)
-          REPO2_FORKS=$(jq -r '.[1].forks_count // 0' top_projects.json)
-
-          echo "=== DADOS COLETADOS ==="
-          echo "👤 $NAME (@$LOGIN)"
-          echo "📊 $REPOS repositórios, $FOLLOWERS seguidores"
-          echo "💻 $COMMITS commits, $PRS PRs, $ISSUES issues"
-          echo "⭐ Projeto 1: $REPO1_NAME ($REPO1_STARS★) - $REPO1_LANG"
-          echo "⭐ Projeto 2: $REPO2_NAME ($REPO2_STARS★) - $REPO2_LANG"
-
-          # Exportar para outputs
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "bio=$BIO" >> $GITHUB_OUTPUT
           echo "repos=$REPOS" >> $GITHUB_OUTPUT
           echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
-          echo "following=$FOLLOWING" >> $GITHUB_OUTPUT
           echo "commits=$COMMITS" >> $GITHUB_OUTPUT
           echo "prs=$PRS" >> $GITHUB_OUTPUT
           echo "issues=$ISSUES" >> $GITHUB_OUTPUT
@@ -130,160 +104,74 @@ jobs:
           echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
           echo "class=$CLASS" >> $GITHUB_OUTPUT
           echo "rank=$RANK" >> $GITHUB_OUTPUT
-          echo "repo1_name=$REPO1_NAME" >> $GITHUB_OUTPUT
-          echo "repo1_desc=$REPO1_DESC" >> $GITHUB_OUTPUT
-          echo "repo1_stars=$REPO1_STARS" >> $GITHUB_OUTPUT
-          echo "repo1_lang=$REPO1_LANG" >> $GITHUB_OUTPUT
-          echo "repo1_forks=$REPO1_FORKS" >> $GITHUB_OUTPUT
-          echo "repo2_name=$REPO2_NAME" >> $GITHUB_OUTPUT
-          echo "repo2_desc=$REPO2_DESC" >> $GITHUB_OUTPUT
-          echo "repo2_stars=$REPO2_STARS" >> $GITHUB_OUTPUT
-          echo "repo2_lang=$REPO2_LANG" >> $GITHUB_OUTPUT
-          echo "repo2_forks=$REPO2_FORKS" >> $GITHUB_OUTPUT
 
-      - name: 🎨 Gerar SVG com Avatar e Linguagens
+      - name: 🎨 Gerar SVG Dark Red com Avatar Circular
         run: |
           mkdir -p cards
+          PROJECT1_NAME=$(jq -r '.name' top_projects.json | head -1)
+          PROJECT1_DESC=$(jq -r '.description' top_projects.json | head -1)
+          PROJECT1_STARS=$(jq -r '.stars' top_projects.json | head -1)
+
+          PROJECT2_NAME=$(jq -r '.name' top_projects.json | tail -1)
+          PROJECT2_DESC=$(jq -r '.description' top_projects.json | tail -1)
+          PROJECT2_STARS=$(jq -r '.stars' top_projects.json | tail -1)
+
           CURRENT_DATE=$(date +'%d/%m/%Y')
 
-          # Calcular largura da barra de XP
-          XP_BAR_WIDTH=$(( ${{ steps.fetch-data.outputs.xp_percentage }} * 200 / 100 ))
-
-          cat > cards/${{ github.event.inputs.usuario }}.svg << 'EOF'
-          <svg xmlns="http://www.w3.org/2000/svg" width="500" height="320" viewBox="0 0 500 320">
+          cat > cards/${{ github.event.inputs.usuario }}.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="460" height="310" viewBox="0 0 460 310">
             <defs>
               <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#0d0000"/>
                 <stop offset="100%" stop-color="#330000"/>
               </linearGradient>
-              <clipPath id="avatarClip">
-                <circle cx="60" cy="60" r="35"/>
-              </clipPath>
+              <style>
+                .title { font-size: 22px; font-weight: bold; fill: #FF4444; }
+                .subtitle { font-size: 13px; fill: #FF8888; }
+                .text { font-size: 11px; fill: #FFCCCC; }
+                .project-title { font-size: 11px; font-weight: bold; fill: #FFAAAA; }
+                .project-desc { font-size: 10px; fill: #FFBBBB; }
+              </style>
             </defs>
 
-            <!-- Fundo principal -->
-            <rect width="500" height="320" fill="url(#bgGradient)" rx="15" stroke="#FF0000" stroke-width="3"/>
+            <rect width="460" height="310" fill="url(#bgGradient)" rx="15" ry="15" stroke="#FF0000" stroke-width="3"/>
 
             <!-- Avatar Circular -->
-            <image href="${{ steps.fetch-data.outputs.avatar }}" x="20" y="20" width="70" height="70" clip-path="url(#avatarClip)" />
+            <clipPath id="avatarClip"><circle cx="70" cy="75" r="30"/></clipPath>
+            <image href="${{ steps.fetch-data.outputs.avatar }}" x="40" y="45" width="60" height="60" clip-path="url(#avatarClip)" />
 
-            <!-- Informações do usuário -->
-            <text x="110" y="35" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#FF4444">
-              ${{ steps.fetch-data.outputs.name }}
-            </text>
-            <text x="110" y="55" font-family="Arial, sans-serif" font-size="12" fill="#FF8888">
-              @${{ steps.fetch-data.outputs.login }}
-            </text>
-            <text x="110" y="72" font-family="Arial, sans-serif" font-size="10" fill="#FFCCCC">
-              🏢 ${{ github.event.inputs.empresa }} • 💼 ${{ github.event.inputs.cargo }}
-            </text>
+            <!-- Nome, empresa e cargo -->
+            <text x="120" y="65" class="title">${{ steps.fetch-data.outputs.name }}</text>
+            <text x="120" y="85" class="subtitle">🏢 ${{ github.event.inputs.empresa }} • 💼 ${{ github.event.inputs.cargo }}</text>
+            <text x="120" y="100" class="subtitle">⚔ ${{
+              steps.fetch-data.outputs.class }} • 🩸 ${{
+              steps.fetch-data.outputs.rank }}</text>
 
-            <!-- Classe e Rank -->
-            <text x="110" y="90" font-family="Arial, sans-serif" font-size="11" fill="#FFAAAA">
-              ⚔️ ${{ steps.fetch-data.outputs.class }} • 🩸 ${{ steps.fetch-data.outputs.rank }}
-            </text>
+            <text x="120" y="120" class="text">${{ steps.fetch-data.outputs.bio }}</text>
 
-            <!-- Bio -->
-            <text x="110" y="108" font-family="Arial, sans-serif" font-size="10" fill="#FFBBBB">
-              ${{ steps.fetch-data.outputs.bio }}
-            </text>
+            <!-- XP -->
+            <text x="120" y="140" class="text">Nível: ${{
+              steps.fetch-data.outputs.level }} • XP: ${{
+              steps.fetch-data.outputs.total_xp }}</text>
+            <rect x="120" y="145" width="200" height="8" fill="#220000" rx="4" ry="4"/>
+            <rect x="120" y="145" width="$((200 * ${{ steps.fetch-data.outputs.xp_percentage }} / 100))" height="8" fill="#FF2222" rx="4" ry="4"/>
 
-            <!-- Barra de XP -->
-            <g transform="translate(110, 125)">
-              <text x="0" y="0" font-family="Arial, sans-serif" font-size="10" fill="#FFCCCC">
-                Nível ${{ steps.fetch-data.outputs.level }} • ${{ steps.fetch-data.outputs.total_xp }} XP
-              </text>
-              <rect x="0" y="8" width="200" height="10" fill="#220000" rx="5"/>
-              <rect x="0" y="8" width="$XP_BAR_WIDTH" height="10" fill="#FF2222" rx="5"/>
-              <text x="100" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#FFFFFF" font-weight="bold">
-                ${{ steps.fetch-data.outputs.xp_percentage }}%
-              </text>
-            </g>
+            <!-- Projetos -->
+            <text x="30" y="180" class="subtitle">⭐ Projetos em destaque:</text>
+            <text x="30" y="200" class="project-title">• $PROJECT1_NAME</text>
+            <text x="30" y="215" class="project-desc">$PROJECT1_DESC</text>
+            <text x="30" y="230" class="project-desc">⭐ $PROJECT1_STARS estrelas</text>
 
-            <!-- Estatísticas rápidas -->
-            <g transform="translate(20, 160)">
-              <rect width="460" height="30" rx="8" fill="rgba(255,0,0,0.1)"/>
-              
-              <text x="30" y="12" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#FF4444">
-                📦 ${{ steps.fetch-data.outputs.repos }}
-              </text>
-              <text x="30" y="24" font-family="Arial, sans-serif" font-size="8" fill="#FF8888">
-                Repos
-              </text>
-
-              <text x="120" y="12" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#FF4444">
-                👥 ${{ steps.fetch-data.outputs.followers }}
-              </text>
-              <text x="120" y="24" font-family="Arial, sans-serif" font-size="8" fill="#FF8888">
-                Seguidores
-              </text>
-
-              <text x="210" y="12" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#FF4444">
-                💾 ${{ steps.fetch-data.outputs.commits }}
-              </text>
-              <text x="210" y="24" font-family="Arial, sans-serif" font-size="8" fill="#FF8888">
-                Commits
-              </text>
-
-              <text x="300" y="12" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#FF4444">
-                🔀 ${{ steps.fetch-data.outputs.prs }}
-              </text>
-              <text x="300" y="24" font-family="Arial, sans-serif" font-size="8" fill="#FF8888">
-                PRs
-              </text>
-
-              <text x="390" y="12" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#FF4444">
-                🐛 ${{ steps.fetch-data.outputs.issues }}
-              </text>
-              <text x="390" y="24" font-family="Arial, sans-serif" font-size="8" fill="#FF8888">
-                Issues
-              </text>
-            </g>
-
-            <!-- Projetos em Destaque -->
-            <g transform="translate(20, 205)">
-              <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#FF4444">
-                ⭐ Projetos em Destaque
-              </text>
-
-              <!-- Projeto 1 -->
-              <g transform="translate(0, 20)">
-                <rect width="225" height="70" rx="8" fill="rgba(255,0,0,0.08)"/>
-                <text x="10" y="15" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFAAAA">
-                  ${{ steps.fetch-data.outputs.repo1_name }}
-                </text>
-                <text x="10" y="30" font-family="Arial, sans-serif" font-size="9" fill="#FFBBBB">
-                  ${{ steps.fetch-data.outputs.repo1_desc }}
-                </text>
-                <text x="10" y="45" font-family="Arial, sans-serif" font-size="9" fill="#FF8888">
-                  🏷️ ${{ steps.fetch-data.outputs.repo1_lang }}
-                </text>
-                <text x="10" y="60" font-family="Arial, sans-serif" font-size="9" fill="#FF8888">
-                  ⭐ ${{ steps.fetch-data.outputs.repo1_stars }} • 🍴 ${{ steps.fetch-data.outputs.repo1_forks }}
-                </text>
-              </g>
-
-              <!-- Projeto 2 -->
-              <g transform="translate(235, 20)">
-                <rect width="225" height="70" rx="8" fill="rgba(255,0,0,0.08)"/>
-                <text x="10" y="15" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFAAAA">
-                  ${{ steps.fetch-data.outputs.repo2_name }}
-                </text>
-                <text x="10" y="30" font-family="Arial, sans-serif" font-size="9" fill="#FFBBBB">
-                  ${{ steps.fetch-data.outputs.repo2_desc }}
-                </text>
-                <text x="10" y="45" font-family="Arial, sans-serif" font-size="9" fill="#FF8888">
-                  🏷️ ${{ steps.fetch-data.outputs.repo2_lang }}
-                </text>
-                <text x="10" y="60" font-family="Arial, sans-serif" font-size="9" fill="#FF8888">
-                  ⭐ ${{ steps.fetch-data.outputs.repo2_stars }} • 🍴 ${{ steps.fetch-data.outputs.repo2_forks }}
-                </text>
-              </g>
-            </g>
+            <text x="240" y="200" class="project-title">• $PROJECT2_NAME</text>
+            <text x="240" y="215" class="project-desc">$PROJECT2_DESC</text>
+            <text x="240" y="230" class="project-desc">⭐ $PROJECT2_STARS estrelas</text>
 
             <!-- Rodapé -->
-            <text x="250" y="310" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#FF8888">
-              🛡️ Gerado em $CURRENT_DATE • Guild Card
+            <text x="230" y="295" text-anchor="middle" class="text">
+              Gerado em $CURRENT_DATE • ${{
+                steps.fetch-data.outputs.commits }} commits • ${{
+                steps.fetch-data.outputs.prs }} PRs • ${{
+                steps.fetch-data.outputs.issues }} issues
             </text>
           </svg>
           EOF
@@ -292,10 +180,10 @@ jobs:
 
       - name: 💾 Commit e Push automático
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add cards/
-          git commit -m "🛡️ Atualização do cartão da guilda para ${{ github.event.inputs.usuario }}" || echo "Nenhuma mudança detectada"
+          git commit -m "🩸 Atualização do cartão da guilda para ${{ github.event.inputs.usuario }}" || echo "Nenhuma mudança detectada"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TSUKUYOMI_CICONHA }}
