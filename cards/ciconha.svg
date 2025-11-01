@@ -1,48 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="460" height="310" viewBox="0 0 460 310">
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="280" viewBox="0 0 460 280">
   <defs>
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0d0000"/>
-      <stop offset="100%" stop-color="#330000"/>
+    <linearGradient id="darkRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#120000"/>
+      <stop offset="100%" stop-color="#360000"/>
     </linearGradient>
     <style>
-      .title { font-size: 22px; font-weight: bold; fill: #FF4444; }
-      .subtitle { font-size: 13px; fill: #FF8888; }
-      .text { font-size: 11px; fill: #FFCCCC; }
-      .project-title { font-size: 11px; font-weight: bold; fill: #FFAAAA; }
-      .project-desc { font-size: 10px; fill: #FFBBBB; }
+      .title { font-size: 22px; font-weight: bold; fill: #FF3333; }
+      .subtitle { font-size: 13px; fill: #FF7777; }
+      .text { font-size: 11px; fill: #FFAAAA; }
+      .bar-bg { fill: #1a0000; }
+      .bar-fill { fill: #FF2222; }
     </style>
   </defs>
 
-  <rect width="460" height="310" fill="url(#bgGradient)" rx="15" ry="15" stroke="#FF0000" stroke-width="3"/>
+  <rect width="460" height="280" rx="15" ry="15" fill="url(#darkRed)" stroke="#880000" stroke-width="3"/>
 
-  <!-- Avatar Circular -->
-  <clipPath id="avatarClip"><circle cx="70" cy="75" r="30"/></clipPath>
-  <image href="https://avatars.githubusercontent.com/u/131923066?v=4" x="40" y="45" width="60" height="60" clip-path="url(#avatarClip)" />
+  <!-- Cabeçalho -->
+  <text x="30" y="55" class="title">Eduardo Ciconha</text>
+  <text x="30" y="75" class="subtitle">🏢 INSS • 💼 Estágiario de TI</text>
+  <text x="30" y="93" class="subtitle">⚔️ Aventureiro • 🩸 Herói</text>
 
-  <!-- Nome, empresa e cargo -->
-  <text x="120" y="65" class="title">Eduardo Ciconha</text>
-  <text x="120" y="85" class="subtitle">🏢 INSS • 💼 Estágiario de TI</text>
-  <text x="120" y="100" class="subtitle">⚔ Aventureiro • 🩸 Herói</text>
+  <!-- Bio -->
+  <text x="30" y="115" class="text">夜幕降临 ブロック7</text>
 
-  <text x="120" y="120" class="text">夜幕降临 ブロック7</text>
+  <!-- Linguagem + XP -->
+  <text x="30" y="140" class="text">💻 Linguagem principal: CSS</text>
+  <text x="30" y="158" class="text">🏆 Nível: 2 • XP Total: 1880</text>
 
-  <!-- XP -->
-  <text x="120" y="140" class="text">Nível: 2 • XP: 1874</text>
-  <rect x="120" y="145" width="200" height="8" fill="#220000" rx="4" ry="4"/>
-  <rect x="120" y="145" width="174" height="8" fill="#FF2222" rx="4" ry="4"/>
+  <!-- Barra de XP -->
+  <rect x="30" y="165" width="280" height="8" class="bar-bg" rx="4" ry="4"/>
+  <rect x="30" y="165" width="246" height="8" class="bar-fill" rx="4" ry="4"/>
 
   <!-- Projetos -->
-  <text x="30" y="180" class="subtitle">⭐ Projetos em destaque:</text>
-  <text x="30" y="200" class="project-title">• Dungeons-of-Questions</text>
-  <text x="30" y="215" class="project-desc">Sem descrição</text>
-  <text x="30" y="230" class="project-desc">⭐ 2 estrelas</text>
-
-  <text x="240" y="200" class="project-title">• Conversor-de-Moedas-com-API</text>
-  <text x="240" y="215" class="project-desc">Sem descrição</text>
-  <text x="240" y="230" class="project-desc">⭐ 2 estrelas</text>
+  <text x="30" y="195" class="subtitle">⭐ Destaques:</text>
+  <text x="30" y="215" class="text">• API-Dijkstra — ⭐ 2</text>
+  <text x="30" y="232" class="text">• Calculator — ⭐ 2</text>
 
   <!-- Rodapé -->
-  <text x="230" y="295" text-anchor="middle" class="text">
-    Gerado em 01/11/2025 • 72 commits • 0 PRs • 8 issues
+  <text x="230" y="265" text-anchor="middle" class="text">
+    Gerado em 01/11/2025 • 75 commits • 0 PRs • 8 issues
   </text>
 </svg>
