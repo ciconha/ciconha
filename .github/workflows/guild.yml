@@ -42,8 +42,6 @@ jobs:
           # Buscar repositórios
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/$USER/repos?sort=stars&per_page=100&page=1" > repos_page1.json
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/users/$USER/repos?sort=stars&per_page=100&page=2" > repos_page2.json
           
           # Buscar eventos
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -82,94 +80,98 @@ jobs:
           mkdir -p cards
           DATE=$(date +'%d/%m/%Y %H:%M')
 
-          AVATAR="${{ steps.fetch-data.outputs.avatar }}"
-          LOGIN="${{ steps.fetch-data.outputs.login }}"
-          LEVEL="${{ steps.fetch-data.outputs.level }}"
-          XP_PERCENTAGE="${{ steps.fetch-data.outputs.xp_percentage }}"
-          REPOS="${{ steps.fetch-data.outputs.repos }}"
-          FOLLOWERS="${{ steps.fetch-data.outputs.followers }}"
-          COMMITS="${{ steps.fetch-data.outputs.commits }}"
-          PRS="${{ steps.fetch-data.outputs.prs }}"
-          ISSUES="${{ steps.fetch-data.outputs.issues }}"
-          TOTAL_XP="${{ steps.fetch-data.outputs.total_xp }}"
+          # Usar variáveis diretamente dos outputs
+          AVATAR_URL="${{ steps.fetch-data.outputs.avatar }}"
+          USER_LOGIN="${{ steps.fetch-data.outputs.login }}"
+          USER_LEVEL="${{ steps.fetch-data.outputs.level }}"
+          XP_PCT="${{ steps.fetch-data.outputs.xp_percentage }}"
+          REPOS_COUNT="${{ steps.fetch-data.outputs.repos }}"
+          FOLLOWERS_COUNT="${{ steps.fetch-data.outputs.followers }}"
+          COMMITS_COUNT="${{ steps.fetch-data.outputs.commits }}"
+          PRS_COUNT="${{ steps.fetch-data.outputs.prs }}"
+          ISSUES_COUNT="${{ steps.fetch-data.outputs.issues }}"
+          TOTAL_XP_COUNT="${{ steps.fetch-data.outputs.total_xp }}"
 
-          # Gerar SVG com barra de XP dinâmica
-          cat > cards/ciconha.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280">
-            <!-- Fundo do cartão -->
-            <rect width="500" height="280" rx="15" fill="#1a1a2e" stroke="#4a90e2" stroke-width="3"/>
-            
-            <!-- Header com gradiente -->
-            <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#16213e" />
-              <stop offset="100%" stop-color="#0f3460" />
-            </linearGradient>
-            <rect width="500" height="80" rx="15" fill="url(#headerGradient)"/>
-            
-            <!-- Avatar -->
-            <defs>
-              <clipPath id="avatarClip">
-                <circle cx="60" cy="60" r="35"/>
-              </clipPath>
-            </defs>
-            <image href="${AVATAR}" x="25" y="25" width="70" height="70" clip-path="url(#avatarClip)"/>
-            
-            <!-- Informações do usuário -->
-            <text x="120" y="40" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
-              ${LOGIN}
-            </text>
-            <text x="120" y="60" font-family="Arial, sans-serif" font-size="12" fill="#e0e0e0">
-              Nv. ${LEVEL} • 🚀 Lenda Fullstack
-            </text>
-            <text x="120" y="75" font-family="Arial, sans-serif" font-size="10" fill="#b0b0b0">
-              FULLSTACK • INSS • 20 anos
-            </text>
-            
-            <!-- Barra de XP -->
-            <text x="25" y="110" font-family="Arial, sans-serif" font-size="11" fill="#e0e0e0">
-              PROGRESSO DE XP: ${TOTAL_XP} pontos
-            </text>
-            <rect x="25" y="115" width="450" height="20" rx="10" fill="#2d3748"/>
-            <rect x="25" y="115" width="${XP_PERCENTAGE * 4.5}" height="20" rx="10" fill="#4caf50"/>
-            <text x="250" y="129" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffffff" font-weight="bold">
-              ${XP_PERCENTAGE}% • Nível ${LEVEL}
-            </text>
-            
-            <!-- Estatísticas -->
-            <g transform="translate(25, 150)">
-              <!-- Linha 1 -->
-              <rect x="0" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
-              <text x="50" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">REPOS</text>
-              <text x="50" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#4caf50" font-weight="bold">${REPOS}</text>
-              
-              <rect x="120" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
-              <text x="170" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">SEGUIDORES</text>
-              <text x="170" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#2196f3" font-weight="bold">${FOLLOWERS}</text>
-              
-              <rect x="240" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
-              <text x="290" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">COMMITS</text>
-              <text x="290" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ff9800" font-weight="bold">${COMMITS}</text>
-              
-              <!-- Linha 2 -->
-              <rect x="0" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
-              <text x="50" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">PULL REQUESTS</text>
-              <text x="50" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#e91e63" font-weight="bold">${PRS}</text>
-              
-              <rect x="120" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
-              <text x="170" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">ISSUES</text>
-              <text x="170" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#9c27b0" font-weight="bold">${ISSUES}</text>
-              
-              <rect x="240" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
-              <text x="290" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">TOTAL XP</text>
-              <text x="290" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffeb3b" font-weight="bold">${TOTAL_XP}</text>
-            </g>
-            
-            <!-- Footer -->
-            <text x="250" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#888">
-              Gerado em ${DATE} • Guild Workflow
-            </text>
-          </svg>
-          EOF
+          # Calcular largura da barra de XP
+          XP_WIDTH=$(( XP_PCT * 450 / 100 ))
+
+          # Gerar SVG de forma segura usando cat e EOF
+          cat > cards/ciconha.svg << 'EOF'
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280">
+  <!-- Fundo do cartão -->
+  <rect width="500" height="280" rx="15" fill="#1a1a2e" stroke="#4a90e2" stroke-width="3"/>
+  
+  <!-- Header com gradiente -->
+  <defs>
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16213e" />
+      <stop offset="100%" stop-color="#0f3460" />
+    </linearGradient>
+    <clipPath id="avatarClip">
+      <circle cx="60" cy="60" r="35"/>
+    </clipPath>
+  </defs>
+  <rect width="500" height="80" rx="15" fill="url(#headerGradient)"/>
+  
+  <!-- Avatar -->
+  <image href="${AVATAR_URL}" x="25" y="25" width="70" height="70" clip-path="url(#avatarClip)"/>
+  
+  <!-- Informações do usuário -->
+  <text x="120" y="40" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
+    ${USER_LOGIN}
+  </text>
+  <text x="120" y="60" font-family="Arial, sans-serif" font-size="12" fill="#e0e0e0">
+    Nv. ${USER_LEVEL} • 🚀 Lenda Fullstack
+  </text>
+  <text x="120" y="75" font-family="Arial, sans-serif" font-size="10" fill="#b0b0b0">
+    FULLSTACK • INSS • 20 anos
+  </text>
+  
+  <!-- Barra de XP -->
+  <text x="25" y="110" font-family="Arial, sans-serif" font-size="11" fill="#e0e0e0">
+    PROGRESSO DE XP: ${TOTAL_XP_COUNT} pontos
+  </text>
+  <rect x="25" y="115" width="450" height="20" rx="10" fill="#2d3748"/>
+  <rect x="25" y="115" width="${XP_WIDTH}" height="20" rx="10" fill="#4caf50"/>
+  <text x="250" y="129" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffffff" font-weight="bold">
+    ${XP_PCT}% • Nível ${USER_LEVEL}
+  </text>
+  
+  <!-- Estatísticas -->
+  <g transform="translate(25, 150)">
+    <!-- Linha 1 -->
+    <rect x="0" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
+    <text x="50" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">REPOS</text>
+    <text x="50" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#4caf50" font-weight="bold">${REPOS_COUNT}</text>
+    
+    <rect x="120" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
+    <text x="170" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">SEGUIDORES</text>
+    <text x="170" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#2196f3" font-weight="bold">${FOLLOWERS_COUNT}</text>
+    
+    <rect x="240" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
+    <text x="290" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">COMMITS</text>
+    <text x="290" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ff9800" font-weight="bold">${COMMITS_COUNT}</text>
+    
+    <!-- Linha 2 -->
+    <rect x="0" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
+    <text x="50" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">PULL REQUESTS</text>
+    <text x="50" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#e91e63" font-weight="bold">${PRS_COUNT}</text>
+    
+    <rect x="120" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
+    <text x="170" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">ISSUES</text>
+    <text x="170" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#9c27b0" font-weight="bold">${ISSUES_COUNT}</text>
+    
+    <rect x="240" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
+    <text x="290" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">TOTAL XP</text>
+    <text x="290" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffeb3b" font-weight="bold">${TOTAL_XP_COUNT}</text>
+  </g>
+  
+  <!-- Footer -->
+  <text x="250" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#888">
+    Gerado em ${DATE} • Guild Workflow
+  </text>
+</svg>
+EOF
 
           echo "✅ Cartão SVG gerado com sucesso para ciconha!"
 
@@ -178,5 +180,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add cards/
-          git commit -m "🧙‍♂️ Cartão da guilda atualizado para ciconha" || echo "Nenhuma alteração para commitar"
+          git diff --staged --quiet || git commit -m "🧙‍♂️ Cartão da guilda atualizado para ciconha"
           git push
