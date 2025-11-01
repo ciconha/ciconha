@@ -3,37 +3,75 @@ name: guild.yml
 on:
   workflow_dispatch:
     inputs:
-      usuario:
-        description: "Usuário do GitHub"
+      github-username:
+        description: "GitHub username para gerar o cartão"
         required: true
         default: "ciconha"
+        type: string
+      force-regenerate:
+        description: "Forçar regeneração do cartão"
+        required: false
+        default: "false"
+        type: boolean
+  push:
+    branches: [ main, master ]
+    paths:
+      - ".github/workflows/**.yml"
+      - "scripts/**.js"
+
   schedule:
     - cron: '0 0 * * 0'
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  gerar-cartao:
+  generate-guild-card:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      USERNAME: ${{ github.event.inputs.github-username || 'ciconha' }}
+      FORCE_REGENERATE: ${{ github.event.inputs.force-regenerate || 'false' }}
 
     steps:
       - name: 🧩 Checkout do repositório
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-      - name: 📦 Instalar dependências
+      - name: 📦 Configurar ambiente
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl jq bc
+          sudo apt-get install -y curl jq bc imagemagick
 
-      - name: 🔍 Buscar dados do GitHub
+      - name: 🔍 Validar usuário GitHub
+        id: validate-user
+        run: |
+          if [ -z "$USERNAME" ]; then
+            echo "❌ Erro: Nome de usuário não especificado"
+            exit 1
+          fi
+          
+          # Verificar se usuário existe
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/users/$USERNAME")
+          
+          if [ "$response" -ne 200 ]; then
+            echo "❌ Erro: Usuário GitHub \"$USERNAME\" não encontrado"
+            exit 1
+          fi
+          
+          echo "✅ Usuário \"$USERNAME\" validado com sucesso"
+          echo "username=$USERNAME" >> $GITHUB_OUTPUT
+
+      - name: 📊 Coletar dados do GitHub
         id: fetch-data
         run: |
-          USER="${{ github.event.inputs.usuario }}"
+          USER="$USERNAME"
+          echo "🔍 Coletando dados para: $USER"
           
           # Buscar dados do usuário
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -41,144 +79,241 @@ jobs:
           
           # Buscar repositórios
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/users/$USER/repos?sort=stars&per_page=100&page=1" > repos_page1.json
+            "https://api.github.com/users/$USER/repos?sort=updated&per_page=100&page=1" > repos.json
           
           # Buscar eventos
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/$USER/events?per_page=100" > events.json
 
-          # Processar dados
+          # Processar dados do usuário
           LOGIN=$(jq -r '.login' user.json)
           AVATAR=$(jq -r '.avatar_url' user.json)
+          NAME=$(jq -r '.name // .login' user.json)
+          BIO=$(jq -r '.bio // "Sem biografia"' user.json)
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
+          FOLLOWING=$(jq -r '.following' user.json)
+          CREATED_AT=$(jq -r '.created_at' user.json | cut -d"T" -f1)
           
-          # Contar commits, PRs e Issues
+          # Contar contribuições
           COMMITS=$(jq '[.[] | select(.type=="PushEvent")] | length' events.json)
           PRS=$(jq '[.[] | select(.type=="PullRequestEvent")] | length' events.json)
           ISSUES=$(jq '[.[] | select(.type=="IssuesEvent")] | length' events.json)
-
+          STARS=$(jq '[.[] | .repo.name] | unique | length' repos.json)
+          
           # Calcular XP e Level
           TOTAL_XP=$((REPOS * 50 + FOLLOWERS * 30 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
           LEVEL=$((TOTAL_XP / 1000 + 1))
           XP_REMAINING=$((TOTAL_XP % 1000))
           XP_PERCENTAGE=$((XP_REMAINING * 100 / 1000))
-
+          
+          # Garantir que XP_PERCENTAGE não seja maior que 100
+          if [ $XP_PERCENTAGE -gt 100 ]; then
+            XP_PERCENTAGE=100
+          fi
+          
+          echo "=== DADOS COLETADOS ==="
+          echo "👤 Login: $LOGIN"
+          echo "📊 Repositórios: $REPOS"
+          echo "👥 Seguidores: $FOLLOWERS"
+          echo "⭐ Estrelas: $STARS"
+          echo "💾 Commits: $COMMITS"
+          echo "🔀 PRs: $PRS"
+          echo "🐛 Issues: $ISSUES"
+          echo "🎯 Total XP: $TOTAL_XP"
+          echo "📈 Level: $LEVEL"
+          echo "📊 XP Progresso: $XP_PERCENTAGE%"
+          
+          # Exportar para outputs
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "bio=$BIO" >> $GITHUB_OUTPUT
           echo "repos=$REPOS" >> $GITHUB_OUTPUT
           echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
+          echo "following=$FOLLOWING" >> $GITHUB_OUTPUT
+          echo "stars=$STARS" >> $GITHUB_OUTPUT
           echo "commits=$COMMITS" >> $GITHUB_OUTPUT
           echo "prs=$PRS" >> $GITHUB_OUTPUT
           echo "issues=$ISSUES" >> $GITHUB_OUTPUT
+          echo "created_at=$CREATED_AT" >> $GITHUB_OUTPUT
           echo "total_xp=$TOTAL_XP" >> $GITHUB_OUTPUT
           echo "level=$LEVEL" >> $GITHUB_OUTPUT
           echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
 
-      - name: 🎨 Gerar Cartão SVG Recheado
+      - name: 🎨 Gerar Cartão SVG Dinâmico
+        id: generate-card
         run: |
           mkdir -p cards
-          DATE=$(date +'%d/%m/%Y %H:%M')
-
-          # Usar variáveis diretamente dos outputs
+          DATE=$(date +"%d/%m/%Y às %H:%M")
+          
+          # Variáveis dos outputs
           AVATAR_URL="${{ steps.fetch-data.outputs.avatar }}"
           USER_LOGIN="${{ steps.fetch-data.outputs.login }}"
+          USER_NAME="${{ steps.fetch-data.outputs.name }}"
+          USER_BIO="${{ steps.fetch-data.outputs.bio }}"
           USER_LEVEL="${{ steps.fetch-data.outputs.level }}"
           XP_PCT="${{ steps.fetch-data.outputs.xp_percentage }}"
           REPOS_COUNT="${{ steps.fetch-data.outputs.repos }}"
           FOLLOWERS_COUNT="${{ steps.fetch-data.outputs.followers }}"
+          FOLLOWING_COUNT="${{ steps.fetch-data.outputs.following }}"
+          STARS_COUNT="${{ steps.fetch-data.outputs.stars }}"
           COMMITS_COUNT="${{ steps.fetch-data.outputs.commits }}"
           PRS_COUNT="${{ steps.fetch-data.outputs.prs }}"
           ISSUES_COUNT="${{ steps.fetch-data.outputs.issues }}"
           TOTAL_XP_COUNT="${{ steps.fetch-data.outputs.total_xp }}"
-
+          CREATED_AT="${{ steps.fetch-data.outputs.created_at }}"
+          
           # Calcular largura da barra de XP
           XP_WIDTH=$(( XP_PCT * 450 / 100 ))
-
-          # Gerar SVG de forma segura usando cat e EOF
-          cat > cards/ciconha.svg << 'EOF'
+          
+          # Cor da barra baseada no nível
+          if [ $USER_LEVEL -lt 5 ]; then
+            XP_COLOR="#4caf50"  # Verde para iniciantes
+          elif [ $USER_LEVEL -lt 10 ]; then
+            XP_COLOR="#2196f3"  # Azul para intermediários
+          elif [ $USER_LEVEL -lt 15 ]; then
+            XP_COLOR="#9c27b0"  # Roxo para avançados
+          else
+            XP_COLOR="#ff9800"  # Laranja para experts
+          fi
+          
+          echo "🎨 Gerando cartão SVG para: $USER_LOGIN"
+          echo "📐 Barra de XP: $XP_PCT% ($XP_WIDTH pixels)"
+          echo "🎯 Cor da barra: $XP_COLOR"
+          
+          # Gerar SVG com template mais robusto
+          cat > cards/${USER_LOGIN}.svg << EOF
 <svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280">
-  <!-- Fundo do cartão -->
-  <rect width="500" height="280" rx="15" fill="#1a1a2e" stroke="#4a90e2" stroke-width="3"/>
-  
-  <!-- Header com gradiente -->
   <defs>
-    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#16213e" />
-      <stop offset="100%" stop-color="#0f3460" />
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
     </linearGradient>
+    <linearGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f3460"/>
+      <stop offset="100%" stop-color="#533483"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
     <clipPath id="avatarClip">
-      <circle cx="60" cy="60" r="35"/>
+      <circle cx="60" cy="60" r="32"/>
     </clipPath>
   </defs>
-  <rect width="500" height="80" rx="15" fill="url(#headerGradient)"/>
+  
+  <!-- Fundo -->
+  <rect width="500" height="280" rx="20" fill="url(#bgGradient)" filter="url(#shadow)"/>
+  
+  <!-- Header -->
+  <rect width="500" height="85" rx="20" fill="url(#headerGradient)"/>
   
   <!-- Avatar -->
-  <image href="${AVATAR_URL}" x="25" y="25" width="70" height="70" clip-path="url(#avatarClip)"/>
+  <image href="${AVATAR_URL}" x="20" y="20" width="80" height="80" clip-path="url(#avatarClip)"/>
   
   <!-- Informações do usuário -->
-  <text x="120" y="40" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
-    ${USER_LOGIN}
+  <text x="120" y="35" font-family=""Arial Black", Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
+    ${USER_NAME}
   </text>
-  <text x="120" y="60" font-family="Arial, sans-serif" font-size="12" fill="#e0e0e0">
-    Nv. ${USER_LEVEL} • 🚀 Lenda Fullstack
+  <text x="120" y="55" font-family="Arial, sans-serif" font-size="12" fill="#e0e0e0">
+    @${USER_LOGIN}
   </text>
-  <text x="120" y="75" font-family="Arial, sans-serif" font-size="10" fill="#b0b0b0">
-    FULLSTACK • INSS • 20 anos
+  <text x="120" y="72" font-family="Arial, sans-serif" font-size="10" fill="#b0b0b0">
+    Nível ${USER_LEVEL} • 🚀 Lenda Fullstack • INSS
   </text>
   
-  <!-- Barra de XP -->
-  <text x="25" y="110" font-family="Arial, sans-serif" font-size="11" fill="#e0e0e0">
-    PROGRESSO DE XP: ${TOTAL_XP_COUNT} pontos
+  <!-- Barra de Progresso -->
+  <text x="25" y="105" font-family="Arial, sans-serif" font-size="11" fill="#e0e0e0">
+    PROGRESSO • ${TOTAL_XP_COUNT} XP
   </text>
-  <rect x="25" y="115" width="450" height="20" rx="10" fill="#2d3748"/>
-  <rect x="25" y="115" width="${XP_WIDTH}" height="20" rx="10" fill="#4caf50"/>
-  <text x="250" y="129" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffffff" font-weight="bold">
-    ${XP_PCT}% • Nível ${USER_LEVEL}
+  <rect x="25" y="110" width="450" height="18" rx="9" fill="#2d3748"/>
+  <rect x="25" y="110" width="${XP_WIDTH}" height="18" rx="9" fill="${XP_COLOR}"/>
+  <text x="250" y="122" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#ffffff" font-weight="bold">
+    ${XP_PCT}% COMPLETO
   </text>
   
   <!-- Estatísticas -->
-  <g transform="translate(25, 150)">
+  <g transform="translate(25, 140)">
+    <rect x="0" y="0" width="450" height="80" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    
     <!-- Linha 1 -->
-    <rect x="0" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
-    <text x="50" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">REPOS</text>
-    <text x="50" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#4caf50" font-weight="bold">${REPOS_COUNT}</text>
+    <g transform="translate(15, 15)">
+      <rect width="60" height="50" rx="5" fill="rgba(76, 175, 80, 0.1)" stroke="rgba(76, 175, 80, 0.3)" stroke-width="1"/>
+      <text x="30" y="18" font-family="Arial, sans-serif" font-size="7" text-anchor="middle" fill="#4caf50">REPOS</text>
+      <text x="30" y="32" font-family=""Arial Black", Arial, sans-serif" font-size="14" text-anchor="middle" fill="#4caf50">${REPOS_COUNT}</text>
+    </g>
     
-    <rect x="120" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
-    <text x="170" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">SEGUIDORES</text>
-    <text x="170" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#2196f3" font-weight="bold">${FOLLOWERS_COUNT}</text>
+    <g transform="translate(85, 15)">
+      <rect width="60" height="50" rx="5" fill="rgba(33, 150, 243, 0.1)" stroke="rgba(33, 150, 243, 0.3)" stroke-width="1"/>
+      <text x="30" y="18" font-family="Arial, sans-serif" font-size="7" text-anchor="middle" fill="#2196f3">SEGUIDORES</text>
+      <text x="30" y="32" font-family=""Arial Black", Arial, sans-serif" font-size="14" text-anchor="middle" fill="#2196f3">${FOLLOWERS_COUNT}</text>
+    </g>
     
-    <rect x="240" y="0" width="100" height="30" rx="5" fill="#2d3748"/>
-    <text x="290" y="12" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">COMMITS</text>
-    <text x="290" y="24" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ff9800" font-weight="bold">${COMMITS_COUNT}</text>
+    <g transform="translate(155, 15)">
+      <rect width="60" height="50" rx="5" fill="rgba(255, 152, 0, 0.1)" stroke="rgba(255, 152, 0, 0.3)" stroke-width="1"/>
+      <text x="30" y="18" font-family="Arial, sans-serif" font-size="7" text-anchor="middle" fill="#ff9800">STARS</text>
+      <text x="30" y="32" font-family=""Arial Black", Arial, sans-serif" font-size="14" text-anchor="middle" fill="#ff9800">${STARS_COUNT}</text>
+    </g>
     
     <!-- Linha 2 -->
-    <rect x="0" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
-    <text x="50" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">PULL REQUESTS</text>
-    <text x="50" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#e91e63" font-weight="bold">${PRS_COUNT}</text>
+    <g transform="translate(225, 15)">
+      <rect width="60" height="50" rx="5" fill="rgba(156, 39, 176, 0.1)" stroke="rgba(156, 39, 176, 0.3)" stroke-width="1"/>
+      <text x="30" y="18" font-family="Arial, sans-serif" font-size="7" text-anchor="middle" fill="#9c27b0">COMMITS</text>
+      <text x="30" y="32" font-family=""Arial Black", Arial, sans-serif" font-size="14" text-anchor="middle" fill="#9c27b0">${COMMITS_COUNT}</text>
+    </g>
     
-    <rect x="120" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
-    <text x="170" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">ISSUES</text>
-    <text x="170" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#9c27b0" font-weight="bold">${ISSUES_COUNT}</text>
+    <g transform="translate(295, 15)">
+      <rect width="60" height="50" rx="5" fill="rgba(233, 30, 99, 0.1)" stroke="rgba(233, 30, 99, 0.3)" stroke-width="1"/>
+      <text x="30" y="18" font-family="Arial, sans-serif" font-size="7" text-anchor="middle" fill="#e91e63">PRs</text>
+      <text x="30" y="32" font-family=""Arial Black", Arial, sans-serif" font-size="14" text-anchor="middle" fill="#e91e63">${PRS_COUNT}</text>
+    </g>
     
-    <rect x="240" y="40" width="100" height="30" rx="5" fill="#2d3748"/>
-    <text x="290" y="52" font-family="Arial, sans-serif" font-size="8" text-anchor="middle" fill="#ffffff">TOTAL XP</text>
-    <text x="290" y="64" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#ffeb3b" font-weight="bold">${TOTAL_XP_COUNT}</text>
+    <g transform="translate(365, 15)">
+      <rect width="60" height="50" rx="5" fill="rgba(255, 235, 59, 0.1)" stroke="rgba(255, 235, 59, 0.3)" stroke-width="1"/>
+      <text x="30" y="18" font-family="Arial, sans-serif" font-size="7" text-anchor="middle" fill="#ffeb3b">XP</text>
+      <text x="30" y="32" font-family=""Arial Black", Arial, sans-serif" font-size="12" text-anchor="middle" fill="#ffeb3b">${USER_LEVEL}</text>
+    </g>
   </g>
   
   <!-- Footer -->
-  <text x="250" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#888">
-    Gerado em ${DATE} • Guild Workflow
+  <text x="250" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#888">
+    🧙‍♂️ Gerado em ${DATE} • guild.workflow
   </text>
 </svg>
 EOF
+          
+          echo "✅ Cartão SVG gerado: cards/${USER_LOGIN}.svg"
+          echo "card_file=cards/${USER_LOGIN}.svg" >> $GITHUB_OUTPUT
 
-          echo "✅ Cartão SVG gerado com sucesso para ciconha!"
+      - name: 📸 Gerar preview (opcional)
+        if: success()
+        run: |
+          # Converter SVG para PNG para preview
+          if command -v convert &> /dev/null; then
+            convert cards/${USER_LOGIN}.svg cards/${USER_LOGIN}.png
+            echo "✅ Preview PNG gerado"
+          else
+            echo "ℹ️  ImageMagick não disponível para gerar PNG"
+          fi
 
-      - name: 💾 Commit e Push do Cartão
+      - name: 💾 Salvar artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: guild-cards
+          path: cards/
+          retention-days: 7
+
+      - name: 📝 Commit das mudanças
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add cards/
-          git diff --staged --quiet || git commit -m "🧙‍♂️ Cartão da guilda atualizado para ciconha"
-          git push
+          
+          # Verificar se há mudanças
+          if git diff --quiet --staged && git diff --quiet; then
+            echo "ℹ️  Nenhuma mudança para commitar"
+          else
+            git add cards/
+            git commit -m "🎨 Atualizar cartão da guilda para ${USER_LOGIN}"
+            git push
+            echo "✅ Mudanças commitadas e enviadas"
+          fi
