@@ -25,13 +25,17 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Run generator script
+      - name: Install (no deps required)
+        run: |
+          echo "No dependencies to install"
+
+      - name: Run generator
         env:
           USERNAME: ${{ github.event.inputs.usuario }}
           CARD_STYLE: "medieval"
           CARD_SIZE: "medium"
           LAYOUT: "banner"
-          AREA: "backend"
+          AREA: "fullstack"
           EMPRESA: "INSS"
           IDADE: "20"
           INCLUDE_STATS: "basic"
@@ -39,15 +43,12 @@ jobs:
           PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN || '' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # garante que Node esteja pronto
-          node --version
-          # roda o script que está em .github/scripts/generateCard.js
           node .github/scripts/generateCard.js
 
-      - name: Commit & Push (se permitido)
+      - name: Commit & Push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add cards/ || true
-          git commit -m "🤖 Atualiza Guild Card: ${{ github.event.inputs.usuario }}" || echo "Nada para commitar"
-          git push || echo "Push falhou - sem permissão"
+          git commit -m "🤖 Atualiza Guild Card para ${{ github.event.inputs.usuario }}" || echo "Nada para commitar"
+          git push || echo "Push falhou (verifique permissões)"
