@@ -1,4 +1,4 @@
-name: 🏰 Guild Card Generator
+name: guild
 
 on:
   workflow_dispatch:
@@ -8,20 +8,15 @@ on:
         required: true
         default: "ciconha"
         type: string
-      force_refresh:
-        description: "Forçar atualização dos dados"
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write
 
 jobs:
-  gerar-cartao-guild:
-    name: 🎨 Gerar Cartão da Guilda
+  build:
     runs-on: ubuntu-latest
-
+    name: 🏰 Gerar Cartão da Guilda
+    
     steps:
       - name: 🧩 Checkout do repositório
         uses: actions/checkout@v4
@@ -71,12 +66,6 @@ jobs:
             CLASS="🏆 Lenda"
             COLOR="#f6e05e"
           fi
-
-          echo "=== DADOS COLETADOS ==="
-          echo "👤 $NAME (@$LOGIN)"
-          echo "📊 $REPOS repositórios, $FOLLOWERS seguidores"
-          echo "💻 $COMMITS commits, $PRS PRs, $ISSUES issues"
-          echo "🎯 Nível $LEVEL ($CLASS) - $XP_PCT% XP"
 
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
@@ -131,13 +120,10 @@ jobs:
     </clipPath>
   </defs>
 
-  <!-- Fundo -->
   <rect width="500" height="280" rx="15" fill="url(#bgGradient)"/>
   
-  <!-- Avatar -->
   <image href="${AVATAR}" x="15" y="15" width="80" height="80" clip-path="url(#avatarClip)"/>
 
-  <!-- Informações principais -->
   <text x="110" y="35" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
     ${NAME}
   </text>
@@ -148,7 +134,6 @@ jobs:
     ${BIO}
   </text>
 
-  <!-- Classe e Nível -->
   <g transform="translate(350, 25)">
     <rect width="130" height="40" rx="8" fill="rgba(255,255,255,0.1)"/>
     <text x="65" y="15" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="${CLASS_COLOR}">
@@ -159,7 +144,6 @@ jobs:
     </text>
   </g>
 
-  <!-- Barra de XP -->
   <g transform="translate(25, 110)">
     <text x="0" y="0" font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0">
       PROGRESSO • ${XP} XP
@@ -171,101 +155,62 @@ jobs:
     </text>
   </g>
 
-  <!-- Estatísticas -->
   <g transform="translate(25, 140)">
     <rect width="450" height="80" rx="10" fill="rgba(255,255,255,0.05)"/>
     
-    <!-- Linha 1 -->
     <g transform="translate(20, 15)">
-      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#48bb78">
-        ${REPOS}
-      </text>
-      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
-        Repositórios
-      </text>
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#48bb78">${REPOS}</text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">Repositórios</text>
     </g>
 
     <g transform="translate(120, 15)">
-      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4299e1">
-        ${FOLLOWERS}
-      </text>
-      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
-        Seguidores
-      </text>
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4299e1">${FOLLOWERS}</text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">Seguidores</text>
     </g>
 
     <g transform="translate(220, 15)">
-      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ed8936">
-        ${COMMITS}
-      </text>
-      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
-        Commits
-      </text>
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ed8936">${COMMITS}</text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">Commits</text>
     </g>
 
     <g transform="translate(320, 15)">
-      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#9f7aea">
-        ${PRS}
-      </text>
-      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
-        Pull Requests
-      </text>
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#9f7aea">${PRS}</text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">Pull Requests</text>
     </g>
 
-    <!-- Linha 2 -->
     <g transform="translate(20, 50)">
-      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f56565">
-        ${ISSUES}
-      </text>
-      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
-        Issues
-      </text>
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f56565">${ISSUES}</text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">Issues</text>
     </g>
 
     <g transform="translate(120, 50)">
-      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#38b2ac">
-        ${FOLLOWING}
-      </text>
-      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
-        Seguindo
-      </text>
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#38b2ac">${FOLLOWING}</text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">Seguindo</text>
     </g>
 
     <g transform="translate(220, 50)">
-      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f6e05e">
-        ${CREATED}
-      </text>
-      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
-        Desde
-      </text>
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f6e05e">${CREATED}</text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">Desde</text>
     </g>
   </g>
 
-  <!-- Footer -->
   <text x="250" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#718096">
-    🏰 Guild Card • Gerado em ${DATE} • github.com/${LOGIN}
+    🏰 Guild Card • ${DATE} • github.com/${LOGIN}
   </text>
 </svg>
 EOF
-
-          echo "✅ Cartão gerado: cards/$LOGIN.svg"
 
       - name: 💾 Commit e Push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add cards/
-          if git diff --staged --quiet; then
-            echo "ℹ️ Nenhuma mudança para commitar"
-          else
-            git commit -m "🏰 Cartão da guilda gerado para ${{ github.event.inputs.username }}"
-            git push
-            echo "✅ Cartão commitado com sucesso"
-          fi
+          git commit -m "🏰 Cartão da guilda para ${{ github.event.inputs.username }}" || echo "Nada para commitar"
+          git push
 
-      - name: 📦 Upload como artefato
+      - name: 📦 Upload artefato
         uses: actions/upload-artifact@v4
         with:
-          name: guild-cards
+          name: guild-card
           path: cards/
           retention-days: 7
