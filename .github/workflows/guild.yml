@@ -423,15 +423,6 @@ jobs:
 
           echo "✅ Cartão premium gerado: cards/${{ env.USERNAME }}-premium.svg"
 
-      - name: 📸 Converter para PNG (opcional)
-        run: |
-          if command -v convert &> /dev/null; then
-            convert cards/${{ env.USERNAME }}-premium.svg cards/${{ env.USERNAME }}-premium.png
-            echo "✅ Versão PNG gerada"
-          else
-            echo "ℹ️ ImageMagick não disponível para PNG"
-          fi
-
       - name: 💾 Salvar artefatos
         uses: actions/upload-artifact@v4
         with:
