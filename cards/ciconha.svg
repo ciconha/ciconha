@@ -1,63 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="450" height="280" viewBox="0 0 450 280">
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="310" viewBox="0 0 460 310">
   <defs>
     <style>
-      .card { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-      .title { font-size: 22px; font-weight: bold; fill: #8B4513; }
-      .subtitle { font-size: 14px; fill: #654321; }
-      .text { font-size: 12px; fill: #5D4037; }
-      .xp-text { font-size: 10px; fill: #795548; }
-      .project-title { font-size: 11px; font-weight: bold; fill: #5D4037; }
-      .project-desc { font-size: 10px; fill: #795548; }
-      .stat { font-size: 11px; fill: #5D4037; }
+      .title { font-size: 22px; font-weight: bold; fill: #3E2723; }
+      .subtitle { font-size: 13px; fill: #4E342E; }
+      .text { font-size: 11px; fill: #5D4037; }
+      .project-title { font-size: 11px; font-weight: bold; fill: #4E342E; }
+      .project-desc { font-size: 10px; fill: #6D4C41; }
     </style>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F5F5DC" />
-      <stop offset="100%" stop-color="#DEB887" />
-    </linearGradient>
-    <linearGradient id="xpGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FFD700" />
-      <stop offset="100%" stop-color="#FFA500" />
+      <stop offset="0%" stop-color="#FFF8E1" />
+      <stop offset="100%" stop-color="#FFE0B2" />
     </linearGradient>
   </defs>
-  
-  <!-- Fundo do cartão -->
-  <rect width="450" height="280" fill="url(#bgGradient)" rx="15" ry="15" stroke="#8B4513" stroke-width="3"/>
-  
+
+  <rect width="460" height="310" fill="url(#bgGradient)" rx="15" ry="15" stroke="#795548" stroke-width="3"/>
+
   <!-- Avatar -->
-  <defs>
-    <clipPath id="avatarClip">
-      <circle cx="75" cy="75" r="30"/>
-    </clipPath>
-  </defs>
+  <clipPath id="avatarClip"><circle cx="75" cy="75" r="30"/></clipPath>
   <image href="https://avatars.githubusercontent.com/u/131923066?v=4" x="45" y="45" width="60" height="60" clip-path="url(#avatarClip)"/>
-  
-  <!-- Informações principais -->
+
+  <!-- Brasão -->
+  <circle cx="400" cy="60" r="25" fill="#FFD700" stroke="#8B4513" stroke-width="2"/>
+  <text x="400" y="65" text-anchor="middle" font-size="20" fill="#4E342E">⚔</text>
+
   <text x="150" y="60" class="title">ciconha</text>
-  <text x="150" y="80" class="subtitle">Nv. 2 - 32 ano (3) no GH-131923066</text>
-  
-  <!-- Barra de XP -->
-  <text x="150" y="100" class="xp-text">1856 XP • 85% para o próximo nível</text>
-  <rect x="150" y="105" width="200" height="8" fill="#E0E0E0" rx="4" ry="4"/>
-  <rect x="150" y="105" width="170" height="8" fill="url(#xpGradient)" rx="4" ry="4"/>
-  
-  <!-- Status -->
-  <text x="150" y="125" class="stat">• Classe: Aventureiro</text>
-  <text x="150" y="140" class="stat">• Rank: Herói</text>
-  <text x="150" y="155" class="stat">• Capacidade: 3</text>
-  
-  <!-- Atividades -->
-  <text x="150" y="175" class="subtitle">Atividades: 63 commits + 0 PRs + 8 issues</text>
-  
-  <!-- Projetos Destacados -->
-  <text x="30" y="200" class="title">Projetos Destacados:</text>
-  <text x="30" y="215" class="project-title">• Dungeons-of-Questions</text>
-  <text x="30" y="230" class="project-desc">Sem descrição</text>
-  <text x="30" y="245" class="project-desc">⭐ 2 estrelas</text>
-  
-  <text x="230" y="215" class="project-title">• Conversor-de-Moedas-com-API</text>
-  <text x="230" y="230" class="project-desc">Sem descrição</text>
-  <text x="230" y="245" class="project-desc">⭐ 2 estrelas</text>
-  
-  <!-- Rodapé -->
-  <text x="225" y="270" text-anchor="middle" class="text">Cartão da Guilda RPG • Gerado em 01/11/2025</text>
+  <text x="150" y="80" class="subtitle">Independente • Aventureiro (Herói)</text>
+
+  <text x="150" y="100" class="text">夜幕降临 ブロック7</text>
+
+  <text x="150" y="120" class="text">Nível 2 • XP Total: 1862</text>
+
+  <!-- Barra XP -->
+  <rect x="150" y="125" width="200" height="8" fill="#E0E0E0" rx="4" ry="4"/>
+  <rect x="150" y="125" width="172" height="8" fill="#FFD54F" rx="4" ry="4"/>
+
+  <!-- Projetos -->
+  <text x="30" y="165" class="subtitle">⭐ Projetos em destaque:</text>
+  <text x="30" y="185" class="project-title">• Dungeons-of-Questions</text>
+  <text x="30" y="200" class="project-desc">Sem descrição</text>
+  <text x="30" y="215" class="project-desc">⭐ 2 estrelas</text>
+
+  <text x="240" y="185" class="project-title">• Conversor-de-Moedas-com-API</text>
+  <text x="240" y="200" class="project-desc">Sem descrição</text>
+  <text x="240" y="215" class="project-desc">⭐ 2 estrelas</text>
+
+  <text x="230" y="290" text-anchor="middle" class="text">
+    Gerado em 01/11/2025 • 66 commits • 0 PRs • 8 issues
+  </text>
 </svg>
