@@ -3,22 +3,21 @@ name: guild.yml
 on:
   workflow_dispatch:
     inputs:
-      github-username:
+      github_username:
         description: "GitHub username para gerar o cartão"
         required: true
         default: "ciconha"
         type: string
-      force-regenerate:
+      force_regenerate:
         description: "Forçar regeneração do cartão"
         required: false
-        default: "false"
+        default: false
         type: boolean
   push:
     branches: [ main, master ]
     paths:
       - ".github/workflows/**.yml"
       - "scripts/**.js"
-
   schedule:
     - cron: '0 0 * * 0'
 
@@ -31,8 +30,8 @@ jobs:
   generate-guild-card:
     runs-on: ubuntu-latest
     env:
-      USERNAME: ${{ github.event.inputs.github-username || 'ciconha' }}
-      FORCE_REGENERATE: ${{ github.event.inputs.force-regenerate || 'false' }}
+      USERNAME: ${{ github.event.inputs.github_username || 'ciconha' }}
+      FORCE_REGENERATE: ${{ github.event.inputs.force_regenerate || false }}
 
     steps:
       - name: 🧩 Checkout do repositório
@@ -49,7 +48,7 @@ jobs:
       - name: 🔍 Validar usuário GitHub
         id: validate-user
         run: |
-          if [ -z "$USERNAME" ]; then
+          if [ -z "${{ env.USERNAME }}" ]; then
             echo "❌ Erro: Nome de usuário não especificado"
             exit 1
           fi
@@ -57,20 +56,20 @@ jobs:
           # Verificar se usuário existe
           response=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/users/$USERNAME")
+            "https://api.github.com/users/${{ env.USERNAME }}")
           
           if [ "$response" -ne 200 ]; then
-            echo "❌ Erro: Usuário GitHub \"$USERNAME\" não encontrado"
+            echo "❌ Erro: Usuário GitHub \"${{ env.USERNAME }}\" não encontrado"
             exit 1
           fi
           
-          echo "✅ Usuário \"$USERNAME\" validado com sucesso"
-          echo "username=$USERNAME" >> $GITHUB_OUTPUT
+          echo "✅ Usuário \"${{ env.USERNAME }}\" validado com sucesso"
+          echo "username=${{ env.USERNAME }}" >> $GITHUB_OUTPUT
 
       - name: 📊 Coletar dados do GitHub
         id: fetch-data
         run: |
-          USER="$USERNAME"
+          USER="${{ env.USERNAME }}"
           echo "🔍 Coletando dados para: $USER"
           
           # Buscar dados do usuário
