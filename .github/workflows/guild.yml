@@ -6,7 +6,7 @@ on:
       usuario:
         description: 'ciconha'
         required: true
-        default: 'Tsukuyomimilier'
+        default: 'ciconha'
 
 permissions:
   contents: write
@@ -28,15 +28,15 @@ jobs:
         id: fetch-data
         run: |
           # Buscar dados do usuário
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -s -H "Authorization: token ${{ secrets.TSUKUYOMI_CICONHA }}" \
             "https://api.github.com/users/${{ github.event.inputs.usuario }}" > user.json
           
           # Buscar repositórios
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -s -H "Authorization: token ${{ secrets.TSUKUYOMI_CICONHA }}" \
             "https://api.github.com/users/${{ github.event.inputs.usuario }}/repos?sort=stars&per_page=100" > repos.json
           
           # Buscar eventos para commits, PRs e issues
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -s -H "Authorization: token ${{ secrets.TSUKUYOMI_CICONHA }}" \
             "https://api.github.com/users/${{ github.event.inputs.usuario }}/events?per_page=100" > events.json
           
           # Processar dados
@@ -186,4 +186,4 @@ jobs:
           git commit -m "Cartão SVG da guilda gerado para ${{ github.event.inputs.usuario }}"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TSUKUYOMI_CICONHA }}
