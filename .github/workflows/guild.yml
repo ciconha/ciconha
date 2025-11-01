@@ -1,18 +1,25 @@
-name: guild
+name: 🏰 Guild Card Generator
 
 on:
   workflow_dispatch:
     inputs:
       username:
-        description: "GitHub username"
+        description: "GitHub username para gerar o cartão"
         required: true
         default: "ciconha"
+        type: string
+      force_refresh:
+        description: "Forçar atualização dos dados"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
 
 jobs:
-  gerar-cartao:
+  gerar-cartao-guild:
+    name: 🎨 Gerar Cartão da Guilda
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +35,8 @@ jobs:
         id: dados
         run: |
           USER="${{ github.event.inputs.username }}"
+          echo "🔍 Coletando dados para: $USER"
+          
           curl -s "https://api.github.com/users/$USER" > user.json
           curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
 
@@ -37,6 +46,7 @@ jobs:
           AVATAR=$(jq -r '.avatar_url' user.json)
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
+          FOLLOWING=$(jq -r '.following' user.json)
           CREATED=$(jq -r '.created_at' user.json | cut -d'T' -f1)
 
           COMMITS=$(jq '[.[] | select(.type=="PushEvent")] | length' events.json)
@@ -50,13 +60,23 @@ jobs:
 
           if [ $XP -lt 300 ]; then
             CLASS="🌱 Novato"
+            COLOR="#48bb78"
           elif [ $XP -lt 600 ]; then
             CLASS="⚔️ Guerreiro"
+            COLOR="#4299e1"
           elif [ $XP -lt 1000 ]; then
             CLASS="🔥 Avançado"
+            COLOR="#ed8936"
           else
             CLASS="🏆 Lenda"
+            COLOR="#f6e05e"
           fi
+
+          echo "=== DADOS COLETADOS ==="
+          echo "👤 $NAME (@$LOGIN)"
+          echo "📊 $REPOS repositórios, $FOLLOWERS seguidores"
+          echo "💻 $COMMITS commits, $PRS PRs, $ISSUES issues"
+          echo "🎯 Nível $LEVEL ($CLASS) - $XP_PCT% XP"
 
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
@@ -64,12 +84,17 @@ jobs:
           echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
           echo "repos=$REPOS" >> $GITHUB_OUTPUT
           echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
+          echo "following=$FOLLOWING" >> $GITHUB_OUTPUT
           echo "created=$CREATED" >> $GITHUB_OUTPUT
+          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+          echo "prs=$PRS" >> $GITHUB_OUTPUT
+          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
           echo "xp=$XP" >> $GITHUB_OUTPUT
           echo "level=$LEVEL" >> $GITHUB_OUTPUT
           echo "xp_bar=$XP_BAR" >> $GITHUB_OUTPUT
           echo "xp_pct=$XP_PCT" >> $GITHUB_OUTPUT
           echo "class=$CLASS" >> $GITHUB_OUTPUT
+          echo "class_color=$COLOR" >> $GITHUB_OUTPUT
 
       - name: 🎨 Gerar SVG do Cartão
         run: |
@@ -82,41 +107,165 @@ jobs:
           AVATAR="${{ steps.dados.outputs.avatar }}"
           REPOS="${{ steps.dados.outputs.repos }}"
           FOLLOWERS="${{ steps.dados.outputs.followers }}"
+          FOLLOWING="${{ steps.dados.outputs.following }}"
           CREATED="${{ steps.dados.outputs.created }}"
+          COMMITS="${{ steps.dados.outputs.commits }}"
+          PRS="${{ steps.dados.outputs.prs }}"
+          ISSUES="${{ steps.dados.outputs.issues }}"
           XP="${{ steps.dados.outputs.xp }}"
           LEVEL="${{ steps.dados.outputs.level }}"
           XP_BAR="${{ steps.dados.outputs.xp_bar }}"
           XP_PCT="${{ steps.dados.outputs.xp_pct }}"
           CLASS="${{ steps.dados.outputs.class }}"
+          CLASS_COLOR="${{ steps.dados.outputs.class_color }}"
 
-          cat > cards/$LOGIN.svg <<EOF
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="220">
-  <style>
-    .title { font: bold 20px sans-serif; fill: #fff; }
-    .text { font: 14px sans-serif; fill: #ccc; }
-    .label { font: 12px sans-serif; fill: #999; }
-  </style>
-  <rect width="100%" height="100%" fill="#1a1a2e"/>
-  <image href="$AVATAR" x="20" y="20" width="60" height="60" />
-  <text x="100" y="40" class="title">$NAME</text>
-  <text x="100" y="65" class="text">@${LOGIN}</text>
-  <text x="100" y="85" class="label">$BIO</text>
-  <text x="20" y="120" class="text">📦 Repositórios: $REPOS</text>
-  <text x="250" y="120" class="text">👥 Seguidores: $FOLLOWERS</text>
-  <text x="20" y="140" class="text">📅 Desde: $CREATED</text>
-  <text x="20" y="160" class="text">🏅 Classe: $CLASS</text>
-  <text x="250" y="160" class="text">🎯 Nível: $LEVEL</text>
-  <text x="20" y="180" class="text">⚡ XP: $XP</text>
-  <rect x="20" y="190" width="450" height="15" rx="7" fill="#444"/>
-  <rect x="20" y="190" width="$XP_BAR" height="15" rx="7" fill="#4caf50"/>
-  <text x="250" y="202" text-anchor="middle" class="label">$XP_PCT% até o próximo nível</text>
+          cat > cards/$LOGIN.svg << 'EOF'
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="280" viewBox="0 0 500 280">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <clipPath id="avatarClip">
+      <circle cx="50" cy="50" r="40"/>
+    </clipPath>
+  </defs>
+
+  <!-- Fundo -->
+  <rect width="500" height="280" rx="15" fill="url(#bgGradient)"/>
+  
+  <!-- Avatar -->
+  <image href="${AVATAR}" x="15" y="15" width="80" height="80" clip-path="url(#avatarClip)"/>
+
+  <!-- Informações principais -->
+  <text x="110" y="35" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff">
+    ${NAME}
+  </text>
+  <text x="110" y="55" font-family="Arial, sans-serif" font-size="12" fill="#e2e8f0">
+    @${LOGIN}
+  </text>
+  <text x="110" y="72" font-family="Arial, sans-serif" font-size="10" fill="#a0aec0">
+    ${BIO}
+  </text>
+
+  <!-- Classe e Nível -->
+  <g transform="translate(350, 25)">
+    <rect width="130" height="40" rx="8" fill="rgba(255,255,255,0.1)"/>
+    <text x="65" y="15" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="${CLASS_COLOR}">
+      ${CLASS}
+    </text>
+    <text x="65" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#ffffff">
+      Nível ${LEVEL}
+    </text>
+  </g>
+
+  <!-- Barra de XP -->
+  <g transform="translate(25, 110)">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="11" fill="#e2e8f0">
+      PROGRESSO • ${XP} XP
+    </text>
+    <rect x="0" y="8" width="450" height="15" rx="7" fill="#2d3748"/>
+    <rect x="0" y="8" width="${XP_BAR}" height="15" rx="7" fill="${CLASS_COLOR}"/>
+    <text x="225" y="19" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ffffff" font-weight="bold">
+      ${XP_PCT}% até nível ${LEVEL}
+    </text>
+  </g>
+
+  <!-- Estatísticas -->
+  <g transform="translate(25, 140)">
+    <rect width="450" height="80" rx="10" fill="rgba(255,255,255,0.05)"/>
+    
+    <!-- Linha 1 -->
+    <g transform="translate(20, 15)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#48bb78">
+        ${REPOS}
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
+        Repositórios
+      </text>
+    </g>
+
+    <g transform="translate(120, 15)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4299e1">
+        ${FOLLOWERS}
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
+        Seguidores
+      </text>
+    </g>
+
+    <g transform="translate(220, 15)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ed8936">
+        ${COMMITS}
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
+        Commits
+      </text>
+    </g>
+
+    <g transform="translate(320, 15)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#9f7aea">
+        ${PRS}
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
+        Pull Requests
+      </text>
+    </g>
+
+    <!-- Linha 2 -->
+    <g transform="translate(20, 50)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f56565">
+        ${ISSUES}
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
+        Issues
+      </text>
+    </g>
+
+    <g transform="translate(120, 50)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#38b2ac">
+        ${FOLLOWING}
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
+        Seguindo
+      </text>
+    </g>
+
+    <g transform="translate(220, 50)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f6e05e">
+        ${CREATED}
+      </text>
+      <text x="0" y="15" font-family="Arial, sans-serif" font-size="9" fill="#a0aec0">
+        Desde
+      </text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <text x="250" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#718096">
+    🏰 Guild Card • Gerado em ${DATE} • github.com/${LOGIN}
+  </text>
 </svg>
 EOF
 
+          echo "✅ Cartão gerado: cards/$LOGIN.svg"
+
       - name: 💾 Commit e Push
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add cards/
-          git commit -m "🏰 Cartão da guilda gerado para ${{ github.event.inputs.username }}"
-          git push
+          if git diff --staged --quiet; then
+            echo "ℹ️ Nenhuma mudança para commitar"
+          else
+            git commit -m "🏰 Cartão da guilda gerado para ${{ github.event.inputs.username }}"
+            git push
+            echo "✅ Cartão commitado com sucesso"
+          fi
+
+      - name: 📦 Upload como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: guild-cards
+          path: cards/
+          retention-days: 7
