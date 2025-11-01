@@ -29,14 +29,34 @@ jobs:
         run: |
           USER="${{ github.event.inputs.username }}"
           curl -s "https://api.github.com/users/$USER" > user.json
+          curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
 
           LOGIN=$(jq -r '.login' user.json)
           NAME=$(jq -r '.name // .login' user.json)
-          BIO=$(jq -r '.bio // "Desbravador da Guilda"' user.json)
+          BIO=$(jq -r '.bio // "Aventureiro da Guilda"' user.json)
           AVATAR=$(jq -r '.avatar_url' user.json)
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
           CREATED=$(jq -r '.created_at' user.json | cut -d'T' -f1)
+
+          COMMITS=$(jq '[.[] | select(.type=="PushEvent")] | length' events.json)
+          PRS=$(jq '[.[] | select(.type=="PullRequestEvent")] | length' events.json)
+          ISSUES=$(jq '[.[] | select(.type=="IssuesEvent")] | length' events.json)
+
+          XP=$((REPOS * 50 + FOLLOWERS * 30 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
+          LEVEL=$((XP / 1000 + 1))
+          XP_BAR=$((XP % 1000 * 450 / 1000))
+          XP_PCT=$((XP % 1000 * 100 / 1000))
+
+          if [ $XP -lt 300 ]; then
+            CLASS="🌱 Novato"
+          elif [ $XP -lt 600 ]; then
+            CLASS="⚔️ Guerreiro"
+          elif [ $XP -lt 1000 ]; then
+            CLASS="🔥 Avançado"
+          else
+            CLASS="🏆 Lenda"
+          fi
 
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
@@ -45,6 +65,11 @@ jobs:
           echo "repos=$REPOS" >> $GITHUB_OUTPUT
           echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
           echo "created=$CREATED" >> $GITHUB_OUTPUT
+          echo "xp=$XP" >> $GITHUB_OUTPUT
+          echo "level=$LEVEL" >> $GITHUB_OUTPUT
+          echo "xp_bar=$XP_BAR" >> $GITHUB_OUTPUT
+          echo "xp_pct=$XP_PCT" >> $GITHUB_OUTPUT
+          echo "class=$CLASS" >> $GITHUB_OUTPUT
 
       - name: 🎨 Gerar SVG do Cartão
         run: |
@@ -58,9 +83,14 @@ jobs:
           REPOS="${{ steps.dados.outputs.repos }}"
           FOLLOWERS="${{ steps.dados.outputs.followers }}"
           CREATED="${{ steps.dados.outputs.created }}"
+          XP="${{ steps.dados.outputs.xp }}"
+          LEVEL="${{ steps.dados.outputs.level }}"
+          XP_BAR="${{ steps.dados.outputs.xp_bar }}"
+          XP_PCT="${{ steps.dados.outputs.xp_pct }}"
+          CLASS="${{ steps.dados.outputs.class }}"
 
           cat > cards/$LOGIN.svg <<EOF
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="200">
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="220">
   <style>
     .title { font: bold 20px sans-serif; fill: #fff; }
     .text { font: 14px sans-serif; fill: #ccc; }
@@ -72,9 +102,14 @@ jobs:
   <text x="100" y="65" class="text">@${LOGIN}</text>
   <text x="100" y="85" class="label">$BIO</text>
   <text x="20" y="120" class="text">📦 Repositórios: $REPOS</text>
-  <text x="20" y="140" class="text">👥 Seguidores: $FOLLOWERS</text>
-  <text x="20" y="160" class="text">📅 Desde: $CREATED</text>
-  <text x="250" y="190" class="label">Gerado em $DATE • GuildCard</text>
+  <text x="250" y="120" class="text">👥 Seguidores: $FOLLOWERS</text>
+  <text x="20" y="140" class="text">📅 Desde: $CREATED</text>
+  <text x="20" y="160" class="text">🏅 Classe: $CLASS</text>
+  <text x="250" y="160" class="text">🎯 Nível: $LEVEL</text>
+  <text x="20" y="180" class="text">⚡ XP: $XP</text>
+  <rect x="20" y="190" width="450" height="15" rx="7" fill="#444"/>
+  <rect x="20" y="190" width="$XP_BAR" height="15" rx="7" fill="#4caf50"/>
+  <text x="250" y="202" text-anchor="middle" class="label">$XP_PCT% até o próximo nível</text>
 </svg>
 EOF
 
@@ -83,5 +118,5 @@ EOF
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add cards/
-          git commit -m "🧙‍♂️ Cartão gerado para ${{ github.event.inputs.username }}"
+          git commit -m "🏰 Cartão da guilda gerado para ${{ github.event.inputs.username }}"
           git push
