@@ -1,4 +1,4 @@
-name: Guild Card SVG
+name: guild Workflow
 
 on:
   workflow_dispatch:
@@ -27,9 +27,9 @@ jobs:
       - name: 🔍 Buscar dados do GitHub
         id: fetch-data
         run: |
-          USER="ciconha"
+          USER="${{ github.event.inputs.usuario }}"
 
-          # Buscar dados do usuário
+          echo "🔍 Buscando dados de $USER..."
           curl -s "https://api.github.com/users/$USER" > user.json
           curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
           curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
@@ -38,8 +38,6 @@ jobs:
           AVATAR=$(jq -r '.avatar_url' user.json)
           REPOS=$(jq -r '.public_repos' user.json)
           FOLLOWERS=$(jq -r '.followers' user.json)
-          USER_ID=$(jq -r '.id' user.json)
-
           COMMITS=$(jq '[.[] | select(.type=="PushEvent")] | length' events.json)
           PRS=$(jq '[.[] | select(.type=="PullRequestEvent")] | length' events.json)
           ISSUES=$(jq '[.[] | select(.type=="IssuesEvent")] | length' events.json)
@@ -48,16 +46,8 @@ jobs:
           LEVEL=$((TOTAL_XP / 1000 + 1))
           XP_PERCENTAGE=$(( (TOTAL_XP % 1000) * 100 / 1000 ))
 
-          jq 'sort_by(-.stargazers_count) | .[0:2] | .[] | {name, description, stars: .stargazers_count}' repos.json > top_projects.json
-
           echo "login=$LOGIN" >> $GITHUB_OUTPUT
           echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
-          echo "repos=$REPOS" >> $GITHUB_OUTPUT
-          echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
-          echo "user_id=$USER_ID" >> $GITHUB_OUTPUT
-          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
-          echo "prs=$PRS" >> $GITHUB_OUTPUT
-          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
           echo "total_xp=$TOTAL_XP" >> $GITHUB_OUTPUT
           echo "level=$LEVEL" >> $GITHUB_OUTPUT
           echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
@@ -65,42 +55,15 @@ jobs:
       - name: 🎨 Gerar Cartão SVG
         run: |
           mkdir -p cards
-
-          PROJECT1_NAME=$(jq -r '.[0].name' top_projects.json)
-          PROJECT1_DESC=$(jq -r '.[0].description // "Sem descrição"' top_projects.json)
-          PROJECT1_STARS=$(jq -r '.[0].stars' top_projects.json)
-
-          PROJECT2_NAME=$(jq -r '.[1].name' top_projects.json)
-          PROJECT2_DESC=$(jq -r '.[1].description // "Sem descrição"' top_projects.json)
-          PROJECT2_STARS=$(jq -r '.[1].stars' top_projects.json)
-
           DATE=$(date +'%d/%m/%Y')
 
-          cat > cards/ciconha.svg <<EOF
-<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300" viewBox="0 0 460 300">
-  <defs>
-    <linearGradient id="grad" x1="0" y1="0" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F5F5DC"/>
-      <stop offset="100%" stop-color="#DEB887"/>
-    </linearGradient>
-  </defs>
-  <rect width="460" height="300" rx="15" fill="url(#grad)" stroke="#8B4513" stroke-width="3"/>
-  <image href="${{ steps.fetch-data.outputs.avatar }}" x="30" y="30" width="80" height="80" clip-path="circle(40px at 40px 40px)"/>
-  <text x="130" y="60" font-size="20" font-weight="bold" fill="#5D4037">${{ steps.fetch-data.outputs.login }}</text>
-  <text x="130" y="80" font-size="12" fill="#795548">Nv. ${{ steps.fetch-data.outputs.level }} • 🚀 Lenda Fullstack</text>
-  <text x="130" y="100" font-size="11" fill="#795548">FULLSTACK • INSS • 20 anos</text>
-  <rect x="130" y="110" width="250" height="8" rx="4" fill="#ddd"/>
-  <rect x="130" y="110" width="${{ steps.fetch-data.outputs.xp_percentage * 2.5 }}" height="8" rx="4" fill="#FFA500"/>
-  <text x="130" y="130" font-size="10" fill="#6D4C41">${{ steps.fetch-data.outputs.total_xp }} XP</text>
-  <text x="30" y="160" font-size="12" fill="#5D4037">⭐ Projetos:</text>
-  <text x="30" y="175" font-size="11" fill="#5D4037">• ${PROJECT1_NAME} — ⭐${PROJECT1_STARS}</text>
-  <text x="30" y="190" font-size="10" fill="#795548">${PROJECT1_DESC}</text>
-  <text x="30" y="210" font-size="11" fill="#5D4037">• ${PROJECT2_NAME} — ⭐${PROJECT2_STARS}</text>
-  <text x="30" y="225" font-size="10" fill="#795548">${PROJECT2_DESC}</text>
-  <text x="230" y="270" text-anchor="middle" font-size="11" fill="#5D4037">Gerado em ${DATE}</text>
-</svg>
-EOF
-          echo "✅ Cartão SVG gerado: cards/ciconha.svg"
+          echo '<svg xmlns="http://www.w3.org/2000/svg" width="460" height="300">' > cards/ciconha.svg
+          echo '<rect width="460" height="300" rx="15" fill="beige" stroke="#8B4513" stroke-width="3"/>' >> cards/ciconha.svg
+          echo "<text x='130' y='60' font-size='20' font-weight='bold'>${{ steps.fetch-data.outputs.login }}</text>" >> cards/ciconha.svg
+          echo "<text x='130' y='80' font-size='12'>Nv. ${{ steps.fetch-data.outputs.level }} • ⚙️ Mestre Backend</text>" >> cards/ciconha.svg
+          echo "<text x='130' y='100' font-size='11'>BACKEND • INSS • 20 anos</text>" >> cards/ciconha.svg
+          echo "<text x='230' y='270' text-anchor='middle' font-size='11'>Gerado em ${DATE}</text>" >> cards/ciconha.svg
+          echo '</svg>' >> cards/ciconha.svg
 
       - name: 💾 Commit e Push
         run: |
