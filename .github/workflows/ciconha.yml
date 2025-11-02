@@ -1,0 +1,75 @@
+name: 🧨 CICONHA CHAOS CARD
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"  # Toda segunda-feira às 03h UTC
+  workflow_dispatch:
+    inputs:
+      usuario:
+        description: "Seu nome de usuário GitHub"
+        required: true
+        default: "ciconha"
+
+permissions:
+  contents: write
+
+jobs:
+  chaos-card:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔍 Coletar dados do GitHub
+        run: |
+          USER="${{ github.event.inputs.usuario }}"
+          curl -s "https://api.github.com/users/$USER" > user.json
+          curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
+          curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
+
+          LOGIN=$(jq -r '.login' user.json)
+          AVATAR=$(jq -r '.avatar_url' user.json)
+          REPOS=$(jq -r '.public_repos' user.json)
+          FOLLOWERS=$(jq -r '.followers' user.json)
+          COMMITS=$(jq '[.[] | select(.type == "PushEvent")] | length' events.json)
+          PRS=$(jq '[.[] | select(.type == "PullRequestEvent")] | length' events.json)
+          ISSUES=$(jq '[.[] | select(.type == "IssuesEvent")] | length' events.json)
+          STARS=$(jq '[.[] | .stargazers_count] | add' repos.json)
+
+          XP=$((REPOS * 50 + FOLLOWERS * 20 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
+          LEVEL=$((XP / 1000 + 1))
+          DATE=$(date +'%Y年%m月%d日')
+
+          mkdir -p chaos
+
+          cat <<EOF > chaos/${USER}-chaos.svg
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="220">
+  <style>
+    .jp { font: bold 16px 'Noto Sans JP', sans-serif; fill: #FF2E63; }
+    .graffiti { font: italic 12px 'Courier New', monospace; fill: #08D9D6; }
+    .label { font: 10px sans-serif; fill: #EAEAEA; }
+    .bg { fill: #252A34; }
+  </style>
+  <rect width="100%" height="100%" class="bg" rx="15"/>
+  <image href="$AVATAR" x="20" y="20" width="60" height="60" clip-path="url(#clip)"/>
+  <defs>
+    <clipPath id="clip"><circle cx="50" cy="50" r="30"/></clipPath>
+  </defs>
+
+  <text x="100" y="40" class="jp">ユーザー: $LOGIN</text>
+  <text x="100" y="60" class="graffiti">LV.$LEVEL | XP: $XP</text>
+  <text x="100" y="80" class="label">Repos: $REPOS | Stars: $STARS</text>
+  <text x="100" y="100" class="label">Commits: $COMMITS | PRs: $PRS | Issues: $ISSUES</text>
+  <text x="230" y="200" text-anchor="middle" class="graffiti">更新日: $DATE</text>
+
+  <!-- Glitch text -->
+  <text x="20" y="180" font-size="10" fill="#FF2E63">⚠️ SYSTEM ERROR: NANOBOT OVERLOAD</text>
+  <text x="20" y="195" font-size="10" fill="#08D9D6">💾 DATA PROTOCOL: CHAOS MODE ENABLED</text>
+</svg>
+EOF
+
+      - name: 💾 Commit e Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add chaos/
+          git commit -m "🧨 Chaos Card atualizado para ${{ github.event.inputs.usuario }}"
+          git push
