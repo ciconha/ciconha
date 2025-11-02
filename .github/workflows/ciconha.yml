@@ -1,14 +1,40 @@
-name: 🧨 CICONHA CHAOS CARD
+// ==============================
+// 🧨 CICONHA CHAOS CARD Generator v3.0
+// ==============================
+class ChaosCardGenerator {
+    constructor() {
+        this.formData = {};
+    }
+
+    collectFormData() {
+        this.formData = {
+            username: document.getElementById('username')?.value.trim() || 'ciconha',
+            token: document.getElementById('token')?.value.trim() || 'GITHUB_TOKEN',
+            workflowName: document.getElementById('workflowName')?.value.trim() || 'ciconha-chaos-card'
+        };
+        return this.formData;
+    }
+
+    validateForm() {
+        const d = this.formData;
+        if (!d.username) return this.showToast('❌ Nome de usuário GitHub é obrigatório!', 'error');
+        return true;
+    }
+
+    generateChaosYAML() {
+        const d = this.formData;
+
+        return `name: 🧨 CICONHA CHAOS CARD
 
 on:
   schedule:
-    - cron: "0 3 * * 1" # Toda segunda-feira às 03:00 UTC
+    - cron: "0 3 * * 1" # Toda segunda-feira às 03h UTC
   workflow_dispatch:
     inputs:
       usuario:
         description: "Seu nome de usuário GitHub"
         required: true
-        default: "ciconha"
+        default: "${d.username}"
 
 permissions:
   contents: write
@@ -17,35 +43,27 @@ jobs:
   chaos-card:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-
       - name: Preparar ambiente
         run: |
-          set -e
           sudo apt-get update -y
           sudo apt-get install -y curl jq
 
       - name: 🔍 Coletar dados do GitHub
         id: collect
         run: |
-          set -e
-          USER="${{ github.event.inputs.usuario }}"
+          USER="\${{ github.event.inputs.usuario }}"
           echo "Coletando dados para: $USER"
-
           curl -s "https://api.github.com/users/$USER" > user.json
           curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=100" > repos.json
           curl -s "https://api.github.com/users/$USER/events?per_page=100" > events.json
 
-          LOGIN=$(jq -r '.login // ""' user.json)
-          NAME=$(jq -r '.name // ""' user.json)
-          BIO=$(jq -r '.bio // ""' user.json | sed 's/"/\\"/g')
-          AVATAR=$(jq -r '.avatar_url // ""' user.json)
+          LOGIN=$(jq -r '.login // empty' user.json)
+          NAME=$(jq -r '.name // empty' user.json)
+          BIO=$(jq -r '.bio // empty' user.json | sed 's/"/\\"/g')
+          AVATAR=$(jq -r '.avatar_url // empty' user.json)
           REPOS=$(jq -r '.public_repos // 0' user.json)
           FOLLOWERS=$(jq -r '.followers // 0' user.json)
-          CREATED=$(jq -r '.created_at // ""' user.json)
+          CREATED=$(jq -r '.created_at // empty' user.json)
 
           COMMITS=$(jq '[.[] | select(.type == "PushEvent")] | length' events.json)
           PRS=$(jq '[.[] | select(.type == "PullRequestEvent")] | length' events.json)
@@ -58,138 +76,118 @@ jobs:
           LEVEL=$((XP / 1000 + 1))
           XP_PERC=$(( (XP % 1000) * 100 / 1000 ))
           DATE=$(date +'%Y年%m月%d日')
-
           STYLE=$((RANDOM % 4))
 
-          echo "STYLE=${STYLE}" >> "$GITHUB_OUTPUT"
-          echo "login=${LOGIN}" >> "$GITHUB_OUTPUT"
-          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
-          echo "bio=${BIO}" >> "$GITHUB_OUTPUT"
-          echo "avatar=${AVATAR}" >> "$GITHUB_OUTPUT"
-          echo "repos=${REPOS}" >> "$GITHUB_OUTPUT"
-          echo "followers=${FOLLOWERS}" >> "$GITHUB_OUTPUT"
-          echo "commits=${COMMITS}" >> "$GITHUB_OUTPUT"
-          echo "prs=${PRS}" >> "$GITHUB_OUTPUT"
-          echo "issues=${ISSUES}" >> "$GITHUB_OUTPUT"
-          echo "stars=${STARS}" >> "$GITHUB_OUTPUT"
-          echo "top1=${TOP1}" >> "$GITHUB_OUTPUT"
-          echo "top1_desc=${TOP1_DESC}" >> "$GITHUB_OUTPUT"
-          echo "xp=${XP}" >> "$GITHUB_OUTPUT"
-          echo "level=${LEVEL}" >> "$GITHUB_OUTPUT"
-          echo "xp_perc=${XP_PERC}" >> "$GITHUB_OUTPUT"
-          echo "date=${DATE}" >> "$GITHUB_OUTPUT"
+          echo "STYLE=$STYLE" >> $GITHUB_OUTPUT
+          echo "login=$LOGIN" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "bio=$BIO" >> $GITHUB_OUTPUT
+          echo "avatar=$AVATAR" >> $GITHUB_OUTPUT
+          echo "repos=$REPOS" >> $GITHUB_OUTPUT
+          echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
+          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
+          echo "prs=$PRS" >> $GITHUB_OUTPUT
+          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
+          echo "stars=$STARS" >> $GITHUB_OUTPUT
+          echo "top1=$TOP1" >> $GITHUB_OUTPUT
+          echo "top1_desc=$TOP1_DESC" >> $GITHUB_OUTPUT
+          echo "xp=$XP" >> $GITHUB_OUTPUT
+          echo "level=$LEVEL" >> $GITHUB_OUTPUT
+          echo "xp_perc=$XP_PERC" >> $GITHUB_OUTPUT
+          echo "date=$DATE" >> $GITHUB_OUTPUT
 
-      - name: 🎨 Gerar SVG caótico (variante aleatória)
+      - name: 🎨 Gerar SVG caótico (CICONHA STYLE)
         run: |
-          set -e
-          USER="${{ github.event.inputs.usuario }}"
+          USER="\${{ github.event.inputs.usuario }}"
           mkdir -p chaos
-          STYLE="${{ steps.collect.outputs.STYLE }}"
-          LOGIN="${{ steps.collect.outputs.login }}"
-          NAME="${{ steps.collect.outputs.name }}"
-          BIO="${{ steps.collect.outputs.bio }}"
-          AVATAR="${{ steps.collect.outputs.avatar }}"
-          REPOS="${{ steps.collect.outputs.repos }}"
-          FOLLOWERS="${{ steps.collect.outputs.followers }}"
-          COMMITS="${{ steps.collect.outputs.commits }}"
-          PRS="${{ steps.collect.outputs.prs }}"
-          ISSUES="${{ steps.collect.outputs.issues }}"
-          STARS="${{ steps.collect.outputs.stars }}"
-          TOP1="${{ steps.collect.outputs.top1 }}"
-          TOP1_DESC="${{ steps.collect.outputs.top1_desc }}"
-          XP="${{ steps.collect.outputs.xp }}"
-          LEVEL="${{ steps.collect.outputs.level }}"
-          XP_PERC="${{ steps.collect.outputs.xp_perc }}"
-          DATE="${{ steps.collect.outputs.date }}"
+          STYLE=\${{ steps.collect.outputs.STYLE }}
+          LOGIN="\${{ steps.collect.outputs.login }}"
+          NAME="\${{ steps.collect.outputs.name }}"
+          BIO="\${{ steps.collect.outputs.bio }}"
+          AVATAR="\${{ steps.collect.outputs.avatar }}"
+          REPOS="\${{ steps.collect.outputs.repos }}"
+          FOLLOWERS="\${{ steps.collect.outputs.followers }}"
+          COMMITS="\${{ steps.collect.outputs.commits }}"
+          PRS="\${{ steps.collect.outputs.prs }}"
+          ISSUES="\${{ steps.collect.outputs.issues }}"
+          STARS="\${{ steps.collect.outputs.stars }}"
+          TOP1="\${{ steps.collect.outputs.top1 }}"
+          TOP1_DESC="\${{ steps.collect.outputs.top1_desc }}"
+          XP="\${{ steps.collect.outputs.xp }}"
+          LEVEL="\${{ steps.collect.outputs.level }}"
+          XP_PERC="\${{ steps.collect.outputs.xp_perc }}"
+          DATE="\${{ steps.collect.outputs.date }}"
 
           if [ "$STYLE" = "0" ]; then
-            BG="#0f1720"; ACC="#FF2E63"; GRA="#08D9D6"; FONT_FAMILY="'Noto Sans JP', sans-serif"
-            NOISE='<rect x="0" y="0" width="30" height="220" fill="#111" opacity="0.05"/>'
+            BG="#0f1720"; ACC="#FF2E63"; GRA="#08D9D6"
           elif [ "$STYLE" = "1" ]; then
-            BG="#14121b"; ACC="#FFD166"; GRA="#06D6A0"; FONT_FAMILY="'Noto Sans JP', sans-serif"
-            NOISE='<rect x="380" y="0" width="80" height="220" fill="#000" opacity="0.06"/>'
+            BG="#14121b"; ACC="#FFD166"; GRA="#06D6A0"
           elif [ "$STYLE" = "2" ]; then
-            BG="#ffffff"; ACC="#1b1b1b"; GRA="#e63946"; FONT_FAMILY="'Yu Gothic', sans-serif"
-            NOISE='<rect x="0" y="0" width="460" height="10" fill="#f5f5f5" opacity="0.6"/>'
+            BG="#ffffff"; ACC="#1b1b1b"; GRA="#e63946"
           else
-            BG="#080808"; ACC="#7C4DFF"; GRA="#00E5FF"; FONT_FAMILY="'Courier New', monospace"
-            NOISE='<rect x="200" y="0" width="260" height="220" fill="#000" opacity="0.03"/>'
+            BG="#080808"; ACC="#7C4DFF"; GRA="#00E5FF"
           fi
 
-          # calcular width para a barra de XP de forma segura em shell
-          BAR_WIDTH=140
-          FILLED_WIDTH=$(( BAR_WIDTH * XP_PERC / 100 ))
-
-          cat <<EOF > "chaos/${USER}-chaos.svg"
-<svg xmlns="http://www.w3.org/2000/svg" width="460" height="220" viewBox="0 0 460 220">
-  <style>
-    .jp { font: bold 16px ${FONT_FAMILY}; fill: ${ACC}; letter-spacing:0.5px; }
-    .graffiti { font: italic 12px ${FONT_FAMILY}; fill: ${GRA}; }
-    .label { font: 10px sans-serif; fill: #cccccc; }
-    .small { font: 9px sans-serif; fill: #aaaaaa; }
-    .bg { fill: ${BG}; }
-    .accent { fill: ${ACC}; }
-  </style>
-
-  <rect width="100%" height="100%" class="bg" rx="18"/>
-  ${NOISE}
-
-  <defs>
-    <clipPath id="clip"><circle cx="50" cy="50" r="34"/></clipPath>
-  </defs>
-
-  <image href="${AVATAR}" x="16" y="18" width="68" height="68" clip-path="url(#clip)"/>
-  <rect x="12" y="12" width="76" height="76" rx="12" fill="none" stroke="${ACC}" stroke-width="1.5" opacity="0.6"/>
-
-  <text x="100" y="36" class="jp">ユーザー: ${LOGIN}</text>
-  <text x="100" y="56" class="small">${NAME}</text>
-  <text x="100" y="74" class="label">${BIO}</text>
-
-  <g transform="translate(18,98)">
-    <rect x="0" y="0" rx="6" width="120" height="32" fill="#0B0B0B" opacity="0.15"/>
-    <text x="8" y="20" class="label">Repos</text>
-    <text x="92" y="20" class="label" text-anchor="end">${REPOS}</text>
-  </g>
-
-  <g transform="translate(152,98)">
-    <rect x="0" y="0" rx="6" width="116" height="32" fill="#0B0B0B" opacity="0.12"/>
-    <text x="8" y="20" class="label">Followers</text>
-    <text x="108" y="20" class="label" text-anchor="end">${FOLLOWERS}</text>
-  </g>
-
-  <g transform="translate(286,98)">
-    <rect x="0" y="0" rx="6" width="156" height="32" fill="#0B0B0B" opacity="0.10"/>
-    <text x="8" y="20" class="label">Stars (sum)</text>
-    <text x="148" y="20" class="label" text-anchor="end">${STARS}</text>
-  </g>
-
-  <text x="18" y="150" class="label">Commits/PRs/Issues</text>
-  <text x="18" y="168" class="graffiti">${COMMITS} / ${PRS} / ${ISSUES}</text>
-
-  <text x="18" y="188" class="label">Top: ${TOP1} — <tspan class="small">${TOP1_DESC}</tspan></text>
-
-  <rect x="300" y="28" width="${BAR_WIDTH}" height="12" rx="6" fill="#222" opacity="0.5"/>
-  <rect x="300" y="28" width="${FILLED_WIDTH}" height="12" rx="6" fill="${ACC}"/>
-  <text x="370" y="22" class="small" text-anchor="middle">LV.${LEVEL} • XP ${XP}</text>
-
-  <g opacity="0.9">
-    <text x="320" y="200" font-size="10" fill="${GRA}">💾 データプロトコル: CHAOS 模式</text>
-    <text x="18" y="200" font-size="10" fill="${ACC}">⚠ SYSTEM ERROR: NANOBOT OVERLOAD</text>
-  </g>
-
-  <text x="230" y="210" text-anchor="middle" class="small">更新日: ${DATE} • CICONHA CHAOS v1</text>
+          cat <<EOF > chaos/\${USER}-chaos.svg
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="220">
+  <rect width="100%" height="100%" fill="\${BG}" rx="16"/>
+  <image href="\${AVATAR}" x="16" y="18" width="68" height="68" clip-path="url(#clip)"/>
+  <text x="100" y="40" fill="\${ACC}" font-weight="bold">\${LOGIN}</text>
+  <text x="100" y="60" fill="\${GRA}" font-size="12">\${NAME}</text>
+  <text x="100" y="80" fill="#999" font-size="10">\${BIO}</text>
+  <text x="18" y="160" fill="#ccc" font-size="10">⭐ Stars: \${STARS} | 🧠 XP: \${XP} | LVL \${LEVEL}</text>
+  <text x="230" y="210" text-anchor="middle" fill="#888" font-size="10">更新日: \${DATE} • CICONHA CHAOS v1</text>
 </svg>
 EOF
-
-      - name: 📁 Mostrar arquivo gerado
-        run: |
-          ls -la chaos || true
-          echo "SVG gerado: chaos/${{ github.event.inputs.usuario }}-chaos.svg"
 
       - name: 💾 Commit e Push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add chaos/
-          git commit -m "🧨 Chaos Card atualizado para ${{ github.event.inputs.usuario }}" || echo "Nada a commitar"
+          git commit -m "🧨 Chaos Card atualizado para \${{ github.event.inputs.usuario }}" || echo "Nada a commitar"
           git push
+`;
+    }
+
+    previewYAML() {
+        this.collectFormData();
+        if (!this.validateForm()) return;
+        const yaml = this.generateChaosYAML();
+        document.getElementById('yamlPreview').textContent = yaml;
+        this.showToast('👁️ Preview do Chaos Card pronto!');
+    }
+
+    downloadYAML() {
+        this.collectFormData();
+        if (!this.validateForm()) return;
+        const content = this.generateChaosYAML();
+        const fileName = `${this.formData.workflowName}.yml`;
+        const blob = new Blob([content], { type: 'text/yaml;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        this.showToast(`⚡ ${fileName} baixado com sucesso!`);
+    }
+
+    showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+}
+
+const chaosGen = new ChaosCardGenerator();
+
+function previewYAML() { chaosGen.previewYAML(); }
+function downloadYAML() { chaosGen.downloadYAML(); }
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('username')?.focus();
+    chaosGen.showToast('🧩 Chaos Card Generator carregado com sucesso!');
+});
