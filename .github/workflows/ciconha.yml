@@ -1,23 +1,23 @@
-// ==============================
-// 🧨 CICONHA CHAOS CARD Generator v3.0
-// ==============================
-class ChaosCardGenerator {
+// =====================================
+// 🧨 Guild Chaos Workflow Generator v3.0
+// =====================================
+
+class ChaosWorkflowGenerator {
     constructor() {
         this.formData = {};
     }
 
     collectFormData() {
         this.formData = {
-            username: document.getElementById('username')?.value.trim() || 'ciconha',
-            token: document.getElementById('token')?.value.trim() || 'GITHUB_TOKEN',
-            workflowName: document.getElementById('workflowName')?.value.trim() || 'ciconha-chaos-card'
+            username: document.getElementById('username')?.value.trim() || '',
+            workflowName: document.getElementById('workflowName')?.value.trim() || 'chaos-card',
         };
         return this.formData;
     }
 
     validateForm() {
         const d = this.formData;
-        if (!d.username) return this.showToast('❌ Nome de usuário GitHub é obrigatório!', 'error');
+        if (!d.username) return this.showToast('❌ GitHub username é obrigatório!', 'error');
         return true;
     }
 
@@ -63,7 +63,6 @@ jobs:
           AVATAR=$(jq -r '.avatar_url // empty' user.json)
           REPOS=$(jq -r '.public_repos // 0' user.json)
           FOLLOWERS=$(jq -r '.followers // 0' user.json)
-          CREATED=$(jq -r '.created_at // empty' user.json)
 
           COMMITS=$(jq '[.[] | select(.type == "PushEvent")] | length' events.json)
           PRS=$(jq '[.[] | select(.type == "PullRequestEvent")] | length' events.json)
@@ -74,7 +73,7 @@ jobs:
 
           XP=$((REPOS * 50 + FOLLOWERS * 20 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
           LEVEL=$((XP / 1000 + 1))
-          XP_PERC=$(( (XP % 1000) * 100 / 1000 ))
+          XP_PERC=$(((XP % 1000) * 100 / 1000))
           DATE=$(date +'%Y年%m月%d日')
           STYLE=$((RANDOM % 4))
 
@@ -96,26 +95,26 @@ jobs:
           echo "xp_perc=$XP_PERC" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
 
-      - name: 🎨 Gerar SVG caótico (CICONHA STYLE)
+      - name: 🎨 Gerar SVG caótico
         run: |
           USER="\${{ github.event.inputs.usuario }}"
           mkdir -p chaos
           STYLE=\${{ steps.collect.outputs.STYLE }}
+          AVATAR="\${{ steps.collect.outputs.avatar }}"
           LOGIN="\${{ steps.collect.outputs.login }}"
           NAME="\${{ steps.collect.outputs.name }}"
           BIO="\${{ steps.collect.outputs.bio }}"
-          AVATAR="\${{ steps.collect.outputs.avatar }}"
           REPOS="\${{ steps.collect.outputs.repos }}"
           FOLLOWERS="\${{ steps.collect.outputs.followers }}"
+          STARS="\${{ steps.collect.outputs.stars }}"
           COMMITS="\${{ steps.collect.outputs.commits }}"
           PRS="\${{ steps.collect.outputs.prs }}"
           ISSUES="\${{ steps.collect.outputs.issues }}"
-          STARS="\${{ steps.collect.outputs.stars }}"
-          TOP1="\${{ steps.collect.outputs.top1 }}"
-          TOP1_DESC="\${{ steps.collect.outputs.top1_desc }}"
           XP="\${{ steps.collect.outputs.xp }}"
           LEVEL="\${{ steps.collect.outputs.level }}"
           XP_PERC="\${{ steps.collect.outputs.xp_perc }}"
+          TOP1="\${{ steps.collect.outputs.top1 }}"
+          TOP1_DESC="\${{ steps.collect.outputs.top1_desc }}"
           DATE="\${{ steps.collect.outputs.date }}"
 
           if [ "$STYLE" = "0" ]; then
@@ -130,13 +129,23 @@ jobs:
 
           cat <<EOF > chaos/\${USER}-chaos.svg
 <svg xmlns="http://www.w3.org/2000/svg" width="460" height="220">
+  <style>
+    .title { font-size:16px; font-weight:bold; fill:\${ACC}; }
+    .text { font-size:11px; fill:\${GRA}; }
+    .small { font-size:9px; fill:#aaa; }
+  </style>
   <rect width="100%" height="100%" fill="\${BG}" rx="16"/>
-  <image href="\${AVATAR}" x="16" y="18" width="68" height="68" clip-path="url(#clip)"/>
-  <text x="100" y="40" fill="\${ACC}" font-weight="bold">\${LOGIN}</text>
-  <text x="100" y="60" fill="\${GRA}" font-size="12">\${NAME}</text>
-  <text x="100" y="80" fill="#999" font-size="10">\${BIO}</text>
-  <text x="18" y="160" fill="#ccc" font-size="10">⭐ Stars: \${STARS} | 🧠 XP: \${XP} | LVL \${LEVEL}</text>
-  <text x="230" y="210" text-anchor="middle" fill="#888" font-size="10">更新日: \${DATE} • CICONHA CHAOS v1</text>
+  <image href="\${AVATAR}" x="16" y="18" width="68" height="68" clip-path="circle(34px at 50% 50%)"/>
+  <text x="100" y="36" class="title">\${LOGIN}</text>
+  <text x="100" y="56" class="small">\${NAME}</text>
+  <text x="100" y="74" class="text">\${BIO}</text>
+  <text x="18" y="150" class="text">Repos: \${REPOS} | Followers: \${FOLLOWERS} | Stars: \${STARS}</text>
+  <text x="18" y="170" class="small">Commits: \${COMMITS} | PRs: \${PRS} | Issues: \${ISSUES}</text>
+  <text x="18" y="188" class="text">Top Repo: \${TOP1} — \${TOP1_DESC}</text>
+  <rect x="300" y="28" width="140" height="12" rx="6" fill="#333" opacity="0.5"/>
+  <rect x="300" y="28" width="\$((140 * \${XP_PERC} / 100))" height="12" rx="6" fill="\${ACC}"/>
+  <text x="370" y="22" class="small" text-anchor="middle">LV.\${LEVEL} • XP \${XP}</text>
+  <text x="230" y="210" text-anchor="middle" class="small">更新日: \${DATE} • CHAOS v1</text>
 </svg>
 EOF
 
@@ -154,40 +163,37 @@ EOF
         this.collectFormData();
         if (!this.validateForm()) return;
         const yaml = this.generateChaosYAML();
-        document.getElementById('yamlPreview').textContent = yaml;
-        this.showToast('👁️ Preview do Chaos Card pronto!');
+        document.getElementById('preview').textContent = yaml;
+        this.showToast('✅ YAML gerado com sucesso!');
     }
 
     downloadYAML() {
-        this.collectFormData();
-        if (!this.validateForm()) return;
-        const content = this.generateChaosYAML();
-        const fileName = `${this.formData.workflowName}.yml`;
-        const blob = new Blob([content], { type: 'text/yaml;charset=utf-8' });
+        const yaml = this.generateChaosYAML();
+        const blob = new Blob([yaml], { type: 'text/yaml' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = fileName;
+        link.download = `${this.formData.workflowName}.yml`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-        this.showToast(`⚡ ${fileName} baixado com sucesso!`);
+        this.showToast('⚡ YAML baixado!');
     }
 
     showToast(msg, type = 'success') {
         const toast = document.getElementById('toast');
+        if (!toast) return alert(msg);
         toast.textContent = msg;
-        toast.className = `toast ${type} show`;
+        toast.className = 'toast ' + type + ' show';
         setTimeout(() => toast.classList.remove('show'), 4000);
     }
 }
 
-const chaosGen = new ChaosCardGenerator();
+// Inicializa
+const chaosGen = new ChaosWorkflowGenerator();
 
-function previewYAML() { chaosGen.previewYAML(); }
-function downloadYAML() { chaosGen.downloadYAML(); }
+function previewChaos() { chaosGen.previewYAML(); }
+function downloadChaos() { chaosGen.downloadYAML(); }
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('username')?.focus();
-    chaosGen.showToast('🧩 Chaos Card Generator carregado com sucesso!');
 });
