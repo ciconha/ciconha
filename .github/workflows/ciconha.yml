@@ -34,7 +34,7 @@ jobs:
         run: |
           set -e
           sudo apt-get update -y
-          sudo apt-get install -y curl jq
+          sudo apt-get install -y curl jq iconv
 
       - name: 🔍 Coletar dados do GitHub
         id: collect
@@ -44,13 +44,11 @@ jobs:
           TOKEN="${{ secrets.TSUKUYOMI_CICONHA || '' }}"
           echo "Coletando dados para: $USER"
 
-          # usa token se existir (melhora rate-limit)
           AUTH=""
           if [ -n "$TOKEN" ]; then
             AUTH="-H \"Authorization: token $TOKEN\""
           fi
 
-          # buscar dados públicos (com ou sem token)
           eval "curl -s $AUTH \"https://api.github.com/users/$USER\" > user.json"
           eval "curl -s $AUTH \"https://api.github.com/users/$USER/repos?per_page=100\" > repos.json"
           eval "curl -s $AUTH \"https://api.github.com/users/$USER/events?per_page=100\" > events.json"
@@ -124,7 +122,6 @@ jobs:
           EMPRESA="${{ github.event.inputs.empresa }}"
           CARGO="${{ github.event.inputs.cargo }}"
 
-          # estilos cyberpunk japoneses (cores, fontes e ruído)
           if [ "$STYLE" = "0" ]; then
             BG="#07060a"; ACC="#ff2e63"; GRA="#08d9d6"; FONT="'Noto Sans JP', sans-serif"
             NOISE='<rect x="0" y="0" width="40" height="220" fill="#000" opacity="0.06"/>'
@@ -142,7 +139,6 @@ jobs:
           BAR_TOTAL=140
           FILLED=$(( BAR_TOTAL * XP_PERC / 100 ))
 
-          # SVG caótico + japonês + grafite nonsense
           cat > "chaos/${USER}-chaos.svg" <<EOF
 <svg xmlns="http://www.w3.org/2000/svg" width="460" height="220" viewBox="0 0 460 220">
   <style>
@@ -160,19 +156,15 @@ jobs:
     <clipPath id="clip"><circle cx="50" cy="50" r="34"/></clipPath>
   </defs>
 
-  <!-- Avatar com moldura neon -->
   <image href="${AVATAR}" x="16" y="16" width="68" height="68" clip-path="url(#clip)"/>
   <rect x="12" y="12" width="76" height="76" rx="12" fill="none" stroke="${ACC}" stroke-width="1.6" opacity="0.8"/>
 
-  <!-- Títulos em japonês -->
   <text x="100" y="36" class="jp">ユーザー：${LOGIN}</text>
   <text x="100" y="56" class="small">${NAME} • ${EMPRESA}</text>
   <text x="100" y="74" class="label">職業：${CARGO}</text>
 
-  <!-- Bio -->
   <text x="18" y="104" class="label">${BIO}</text>
 
-  <!-- Badges compactos -->
   <g transform="translate(18,118)">
     <rect x="0" y="0" rx="6" width="120" height="30" fill="#000" opacity="0.14"/>
     <text x="10" y="19" class="label">リポジトリ</text>
@@ -191,19 +183,15 @@ jobs:
     <text x="140" y="19" class="label" text-anchor="end">${STARS}</text>
   </g>
 
-  <!-- Atividade -->
   <text x="18" y="164" class="label">コミット / PR / Issues</text>
   <text x="18" y="182" class="graffiti">${COMMITS} / ${PRS} / ${ISSUES}</text>
 
-  <!-- Top repo -->
   <text x="18" y="202" class="label">トップ: ${TOP1} — <tspan class="small">${TOP1_DESC}</tspan></text>
 
-  <!-- Barra de XP -->
   <rect x="300" y="22" width="${BAR_TOTAL}" height="12" rx="6" fill="#111" opacity="0.5"/>
   <rect x="300" y="22" width="${FILLED}" height="12" rx="6" fill="${ACC}"/>
   <text x="370" y="18" class="small" text-anchor="middle">LV.${LEVEL} • XP ${XP}</text>
 
-  <!-- Nonsense / glitch / grafite -->
   <text x="18" y="212" font-size="10" fill="${ACC}">⚠️ ナノボット過負荷 - データ破片化</text>
   <text x="280" y="212" font-size="10" fill="${GRA}">CHAOS MODE • 更新日: ${DATE}</text>
 
