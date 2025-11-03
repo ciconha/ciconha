@@ -8,6 +8,9 @@ on:
         required: true
         default: "ciconha"
 
+permissions:
+  contents: write
+
 jobs:
   gerar-card:
     runs-on: ubuntu-latest
@@ -39,9 +42,8 @@ jobs:
 
           XP=$(( (COMMITS + PRS + ISSUES) / 5 ))
           LEVEL=$(( XP / 100 + 1 ))
-          DATE=$(date +"%d/%m/%Y")
+          DATE=$(date +"%Y年%m月%d日")
 
-          # Simulação de "top linguagens"
           TOP1="Python"
           TOP1_DESC="Análise e automação"
           FILLED=$(( XP / 2 ))
@@ -65,12 +67,42 @@ jobs:
         run: |
           USER=${{ github.event.inputs.usuario }}
           mkdir -p japan
-          cat << 'SVG_CONTENT' > "japan/${USER}-card.svg"
-          <svg xmlns="http://www.w3.org/2000/svg" width="920" height="560" viewBox="0 0 920 560">
 
+          cat << 'EOF' > "japan/${USER}-card.svg"
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="560">
+  <style>
+    .bg { fill: #000 }
+    .moon { fill: #b70a0a }
+    .title { font: bold 36px 'Noto Sans JP', sans-serif; fill: #fff }
+    .sub { font: 18px 'Noto Sans JP', sans-serif; fill: #ccc }
+    .mono { font: 16px 'Courier New', monospace; fill: #fff }
+    .small { font: 14px 'Noto Sans JP', sans-serif; fill: #bbb }
+    .bar-bg { fill: #222 }
+    .bar-fill { fill: #b70a0a }
+  </style>
+  <rect width="100%" height="100%" class="bg" rx="28"/>
+  <g transform="translate(720,120)">
+    <circle cx="0" cy="0" r="100" class="moon"/>
+    <text x="0" y="-10" font-size="32" fill="#fff" text-anchor="middle">纒駆者</text>
+    <text x="0" y="24" font-size="16" fill="#fff" text-anchor="middle">職業: コードの冒険者</text>
+  </g>
+  <defs><clipPath id="avatarClip"><circle cx="120" cy="120" r="60"/></clipPath></defs>
+  <rect x="30" y="60" width="180" height="180" rx="18" fill="#111"/>
+  <image href="__AVATAR__" x="60" y="90" width="120" height="120" clip-path="url(#avatarClip)"/>
+  <text x="240" y="110" class="title">ユーザー：__LOGIN__</text>
+  <text x="240" y="150" class="sub">独立 • 個人開発者</text>
+  <text x="240" y="190" class="small">リポジトリ：__REPOS__</text>
+  <text x="240" y="220" class="small">フォロワー：__FOLLOWERS__</text>
+  <text x="240" y="260" class="small">コミット / PR / 課題：__COMMITS__ / __PRS__ / __ISSUES__</text>
+  <text x="240" y="300" class="small">トップ: __TOP1__ — __TOP1_DESC__</text>
+  <rect x="60" y="340" width="360" height="18" rx="9" class="bar-bg"/>
+  <rect x="60" y="340" width="__FILLED__" height="18" rx="9" class="bar-fill"/>
+  <text x="240" y="380" class="mono" text-anchor="middle">LV.__LEVEL__ • 経験値 __XP__</text>
+  <text x="760" y="520" class="small" text-anchor="end">__DATE__</text>
+</svg>
+EOF
 
           svgfile="japan/${USER}-card.svg"
-
           sed -i "s|__AVATAR__|${AVATAR}|g" "$svgfile"
           sed -i "s|__LOGIN__|${LOGIN}|g" "$svgfile"
           sed -i "s|__REPOS__|${REPOS}|g" "$svgfile"
@@ -86,7 +118,6 @@ jobs:
           sed -i "s|__FILLED__|${FILLED}|g" "$svgfile"
 
           echo "✅ SVG criado: $svgfile"
-
 
       - name: Commit e Push
         env:
