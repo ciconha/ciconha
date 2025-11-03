@@ -1,0 +1,99 @@
+name: Ciconha
+
+on:
+  workflow_dispatch:
+    inputs:
+      usuario:
+        description: "Nome do usuário (sem @)"
+        required: true
+        default: "ciconha"
+
+jobs:
+  gerar-card:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin curl jq
+
+      - name: Buscar dados do GitHub
+        id: dados
+        run: |
+          USER=${{ github.event.inputs.usuario }}
+          echo "🔍 Buscando dados de $USER"
+
+          DATA=$(curl -s https://api.github.com/users/$USER)
+          LOGIN=$(echo "$DATA" | jq -r .login)
+          AVATAR=$(echo "$DATA" | jq -r .avatar_url)
+          REPOS=$(echo "$DATA" | jq -r .public_repos)
+          FOLLOWERS=$(echo "$DATA" | jq -r .followers)
+
+          COMMITS=$(curl -s "https://api.github.com/search/commits?q=author:$USER" -H "Accept: application/vnd.github.cloak-preview" | jq -r .total_count)
+          PRS=$(curl -s "https://api.github.com/search/issues?q=author:$USER+type:pr" | jq -r .total_count)
+          ISSUES=$(curl -s "https://api.github.com/search/issues?q=author:$USER+type:issue" | jq -r .total_count)
+
+          XP=$(( (COMMITS + PRS + ISSUES) / 5 ))
+          LEVEL=$(( XP / 100 + 1 ))
+          DATE=$(date +"%d/%m/%Y")
+
+          # Simulação de "top linguagens"
+          TOP1="Python"
+          TOP1_DESC="Análise e automação"
+          FILLED=$(( XP / 2 ))
+          [ $FILLED -gt 360 ] && FILLED=360
+
+          echo "LOGIN=$LOGIN" >> $GITHUB_ENV
+          echo "AVATAR=$AVATAR" >> $GITHUB_ENV
+          echo "REPOS=$REPOS" >> $GITHUB_ENV
+          echo "FOLLOWERS=$FOLLOWERS" >> $GITHUB_ENV
+          echo "COMMITS=$COMMITS" >> $GITHUB_ENV
+          echo "PRS=$PRS" >> $GITHUB_ENV
+          echo "ISSUES=$ISSUES" >> $GITHUB_ENV
+          echo "XP=$XP" >> $GITHUB_ENV
+          echo "LEVEL=$LEVEL" >> $GITHUB_ENV
+          echo "DATE=$DATE" >> $GITHUB_ENV
+          echo "TOP1=$TOP1" >> $GITHUB_ENV
+          echo "TOP1_DESC=$TOP1_DESC" >> $GITHUB_ENV
+          echo "FILLED=$FILLED" >> $GITHUB_ENV
+
+      - name: Gerar SVG personalizado
+        run: |
+          USER=${{ github.event.inputs.usuario }}
+          mkdir -p japan
+          cat << 'SVG_CONTENT' > "japan/${USER}-card.svg"
+          <svg xmlns="http://www.w3.org/2000/svg" width="920" height="560" viewBox="0 0 920 560">
+
+
+          svgfile="japan/${USER}-card.svg"
+
+          sed -i "s|__AVATAR__|${AVATAR}|g" "$svgfile"
+          sed -i "s|__LOGIN__|${LOGIN}|g" "$svgfile"
+          sed -i "s|__REPOS__|${REPOS}|g" "$svgfile"
+          sed -i "s|__FOLLOWERS__|${FOLLOWERS}|g" "$svgfile"
+          sed -i "s|__COMMITS__|${COMMITS}|g" "$svgfile"
+          sed -i "s|__PRS__|${PRS}|g" "$svgfile"
+          sed -i "s|__ISSUES__|${ISSUES}|g" "$svgfile"
+          sed -i "s|__XP__|${XP}|g" "$svgfile"
+          sed -i "s|__LEVEL__|${LEVEL}|g" "$svgfile"
+          sed -i "s|__DATE__|${DATE}|g" "$svgfile"
+          sed -i "s|__TOP1__|${TOP1}|g" "$svgfile"
+          sed -i "s|__TOP1_DESC__|${TOP1_DESC}|g" "$svgfile"
+          sed -i "s|__FILLED__|${FILLED}|g" "$svgfile"
+
+          echo "✅ SVG criado: $svgfile"
+
+
+      - name: Commit e Push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add japan/
+          git commit -m "🈶 Gerado card japonês para ${{ github.event.inputs.usuario }}" || echo "ℹ️ Nenhuma mudança"
+          git push
