@@ -70,7 +70,8 @@ jobs:
 
           cat << 'EOF' > "japan/${USER}-card.svg"
 <svg xmlns="http://www.w3.org/2000/svg" width="920" height="560">
-  <style>
+
+<style>
     .bg { fill: #000 }
     .moon { fill: #b70a0a }
     .title { font: bold 36px 'Noto Sans JP', sans-serif; fill: #fff }
