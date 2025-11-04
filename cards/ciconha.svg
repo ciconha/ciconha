@@ -17,7 +17,7 @@
 
   <!-- Cabeçalho -->
   <text x="30" y="55" class="title">Eduardo Ciconha</text>
-  <text x="30" y="75" class="subtitle">🏢 INSS • 💼 Estágiario de TI</text>
+  <text x="30" y="75" class="subtitle">🏢 INSS • 💼  Estagiário  de TI</text>
   <text x="30" y="93" class="subtitle">⚔️ Aventureiro • 🩸 Herói</text>
 
   <!-- Bio -->
@@ -25,11 +25,11 @@
 
   <!-- Linguagem + XP -->
   <text x="30" y="140" class="text">💻 Linguagem principal: CSS</text>
-  <text x="30" y="158" class="text">🏆 Nível: 2 • XP Total: 1880</text>
+  <text x="30" y="158" class="text">🏆 Nível: 2 • XP Total: 1920</text>
 
   <!-- Barra de XP -->
   <rect x="30" y="165" width="280" height="8" class="bar-bg" rx="4" ry="4"/>
-  <rect x="30" y="165" width="246" height="8" class="bar-fill" rx="4" ry="4"/>
+  <rect x="30" y="165" width="257" height="8" class="bar-fill" rx="4" ry="4"/>
 
   <!-- Projetos -->
   <text x="30" y="195" class="subtitle">⭐ Destaques:</text>
@@ -38,6 +38,6 @@
 
   <!-- Rodapé -->
   <text x="230" y="265" text-anchor="middle" class="text">
-    Gerado em 01/11/2025 • 75 commits • 0 PRs • 8 issues
+    Gerado em 04/11/2025 • 95 commits • 0 PRs • 2 issues
   </text>
 </svg>
