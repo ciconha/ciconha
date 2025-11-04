@@ -12,11 +12,11 @@ on:
       empresa:
         description: 'Nome da empresa (ex: TechLabs Studio)'
         required: false
-        default: 'Independente'
+        default: 'INSS'
       cargo:
         description: 'Cargo atual (ex: Desenvolvedor Back-end)'
         required: false
-        default: 'Aventureiro de Código'
+        default: ' Estagiário  de TI'
 
 permissions:
   contents: write
