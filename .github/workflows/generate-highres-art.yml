@@ -39,7 +39,7 @@ jobs:
           import sys, random
           from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-          def draw_single_folder(draw, x, y, w, h, title, subtitle, right_label, vertical_text, palette):
+          def draw_single_folder(draw, img, x, y, w, h, title, subtitle, right_label, vertical_text, palette):
               bg = palette['bg']
               accent = palette['accent']
               text = palette['text']
@@ -85,13 +85,17 @@ jobs:
               lx = x + w - lbl_w - pad
               ly = y + stripe_h + pad
               draw.rectangle([lx, ly, lx + lbl_w, ly + lbl_h], fill=accent, outline=detail)
-              draw.text((lx + 6, ly + 6), right_label, fill=text, font=font_label)
+              # center right_label text inside box
+              bbox = draw.textbbox((0,0), right_label, font=font_label)
+              text_w = bbox[2]-bbox[0]; text_h = bbox[3]-bbox[1]
+              draw.text((lx + (lbl_w-text_w)/2, ly + (lbl_h-text_h)/2), right_label, fill=text, font=font_label)
 
               # vertical text on right edge (rotated)
               vert_txt = vertical_text
               vt_font = font_vert
-              # create rotated text image
-              vt_w, vt_h = vt_font.getsize(vert_txt)
+              # compute bbox via draw.textbbox
+              vt_bbox = draw.textbbox((0,0), vert_txt, font=vt_font)
+              vt_w = vt_bbox[2]-vt_bbox[0]; vt_h = vt_bbox[3]-vt_bbox[1]
               vt_img = Image.new("RGBA", (vt_w+8, vt_h+8), (0,0,0,0))
               vdraw = ImageDraw.Draw(vt_img)
               vdraw.text((4,4), vert_txt, fill=accent, font=vt_font)
@@ -104,10 +108,12 @@ jobs:
               # barcode-like pattern bottom-right
               bx = x + w - int(w*0.30)
               by = y + int(h*0.56)
+              cur_x = bx
               for i in range(12):
                   bw = random.randint(max(2, w//240), max(6, w//120))
                   bh = int(h*0.18) + random.randint(-h//80, h//80)
-                  draw.rectangle([bx + i*(bw+2), by, bx + i*(bw+2) + bw, by + bh], fill=detail)
+                  draw.rectangle([cur_x, by, cur_x + bw, by + bh], fill=detail)
+                  cur_x += bw + 2
 
               # fingerprint-ish circle detail bottom-left
               cx = x + int(w*0.18)
@@ -140,9 +146,10 @@ jobs:
               draw = ImageDraw.Draw(img)
 
               # subtle noise/grid
-              for i in range(0, W, max(6, scale*6)):
+              step = max(6, scale*6)
+              for i in range(0, W, step):
                   draw.line([(i,0),(i,H)], fill=(255,255,255,6))
-              for j in range(0, H, max(6, scale*6)):
+              for j in range(0, H, step):
                   draw.line([(0,j),(W,j)], fill=(255,255,255,5))
 
               # palette inspired by the examples
@@ -160,9 +167,9 @@ jobs:
               w = W - pad*2
               h = H - pad*2
 
-              draw_single_folder(draw, x, y, w, h, title, subtitle, right_label, vertical_text, palette)
+              draw_single_folder(draw, img, x, y, w, h, title, subtitle, right_label, vertical_text, palette)
 
-              # final polish: tiny gaussian blur (0 or 1), optional sharpening
+              # final polish: tiny gaussian blur (0), save PNG
               img = img.filter(ImageFilter.GaussianBlur(radius=0))
               img.save(out_path, "PNG")
               print("Saved:", out_path)
