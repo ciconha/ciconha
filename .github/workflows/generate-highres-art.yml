@@ -1,0 +1,166 @@
+name: Generate Highres Cyber Art
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/generate-highres-art.yml'
+
+jobs:
+  generate-art:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Pillow
+        run: python -m pip install --upgrade pip && pip install pillow
+
+      - name: Create scripts dir
+        run: mkdir -p scripts output
+
+      - name: Write highres generator script
+        run: |
+          cat > scripts/generate_highres_cyber.py << 'PY'
+          #!/usr/bin/env python3
+          """
+          Gera uma imagem PNG estilo 'pastas cyberpunk' em alta resolução (fundo transparente).
+          Uso: python scripts/generate_highres_cyber.py output/cyber_highres.png 2
+          Onde o último argumento é scale (1=100%, 2=200%, etc).
+          """
+          import sys, random
+          from PIL import Image, ImageDraw, ImageFont, ImageFilter
+
+          def draw_folder(draw, x, y, w, h, title, subtitle, palette):
+              bg = palette['bg']
+              accent = palette['accent']
+              text = palette['text']
+              detail = palette['detail']
+
+              pad = max(6, w//60)
+              # main rectangle with slight inner shading
+              draw.rectangle([x, y, x+w, y+h], fill=None, outline=detail, width=max(1, w//150))
+              inner = (x+pad, y+pad, x+w-pad, y+h-pad)
+              draw.rectangle(inner, fill=bg)
+
+              # tab
+              tab_w = int(w*0.28)
+              tab_h = int(h*0.12)
+              draw.rectangle([x+pad, y-pad-tab_h, x+pad+tab_w, y-pad], fill=accent)
+
+              # top accent stripe
+              stripe_h = int(h*0.06)
+              draw.rectangle([x, y, x+w, y+stripe_h], fill=accent)
+
+              # barcode-like lines
+              bx = x + w - int(w*0.22)
+              by = y + int(h*0.34)
+              for i in range(6):
+                  lw = max(1, 2 + (i % 3))
+                  draw.rectangle([bx + i*max(4,w//60), by, bx + i*max(4,w//60) + lw, by + int(h*0.18)], fill=detail)
+
+              # circle/icon area
+              cx = x + int(w*0.16)
+              cy = y + int(h*0.58)
+              r = int(min(w,h)*0.12)
+              draw.ellipse([cx-r, cy-r, cx+r, cy+r], outline=detail, width=max(1,w//200))
+
+              # fonts (fallback to default if not available)
+              try:
+                  font_title = ImageFont.truetype("DejaVuSans-Bold.ttf", size=max(12, int(h*0.11)))
+                  font_sub = ImageFont.truetype("DejaVuSans.ttf", size=max(10, int(h*0.06)))
+              except Exception:
+                  font_title = ImageFont.load_default()
+                  font_sub = ImageFont.load_default()
+
+              tx = x + int(w*0.08)
+              ty = y + int(h*0.10)
+              draw.text((tx, ty), title, fill=text, font=font_title)
+              draw.text((tx, ty + int(h*0.12)), subtitle, fill=detail, font=font_sub)
+
+              # glitch lines and small noise shapes
+              for i in range(max(6, w//80)):
+                  gx = x + int(w*0.02) + random.randint(0, max(1,int(w*0.9)))
+                  gy = y + int(h*0.2) + random.randint(0, max(1,int(h*0.7)))
+                  gw = random.randint(max(6,w//120), max(20,w//50))
+                  draw.line([gx, gy, gx+gw, gy], fill=accent, width=max(1, w//300))
+
+          def main():
+              out_path = sys.argv[1] if len(sys.argv) > 1 else "output/cyber_highres.png"
+              scale = int(sys.argv[2]) if len(sys.argv) > 2 else 2
+              base_W, base_H = 1200, 800
+              W, H = base_W * scale, base_H * scale
+
+              img = Image.new("RGBA", (W, H), (0,0,0,0))  # transparent background
+              draw = ImageDraw.Draw(img)
+
+              # subtle grid / texture
+              for i in range(0, W, max(8, scale*8)):
+                  line_color = (255,255,255,8)
+                  draw.line([(i,0),(i,H)], fill=line_color)
+              for j in range(0, H, max(8, scale*8)):
+                  draw.line([(0,j),(W,j)], fill=(255,255,255,6))
+
+              palettes = [
+                  {'bg': (24,24,28,255), 'accent': (220,40,40,255), 'text': (245,245,245,255), 'detail': (200,60,60,255)},
+                  {'bg': (20,18,22,255), 'accent': (230,70,60,255), 'text': (240,240,245,255), 'detail': (210,70,70,255)},
+                  {'bg': (22,18,17,255), 'accent': (255,70,70,255), 'text': (245,245,245,255), 'detail': (210,60,60,255)},
+                  {'bg': (245,245,248,255), 'accent': (200,18,30,255), 'text': (18,20,22,255), 'detail': (160,16,22,255)},
+                  {'bg': (240,238,240,255), 'accent': (180,30,30,255), 'text': (24,24,24,255), 'detail': (120,20,20,255)},
+                  {'bg': (230,20,25,255), 'accent': (255,255,255,255), 'text': (255,255,255,255), 'detail': (30,30,30,255)}
+              ]
+
+              titles = [
+                  ("SECRET DARK ZONE", "RD-E // @NIN NETWORK"),
+                  ("DATA PROTOCOL PSYCHOTECH", "NODE: 77-PSY // 2049"),
+                  ("CYBERPROTOCOL NANOBOTCORP", "PROTO v.12 // SAMPLES"),
+                  ("CYBER PASS CODE", "ACCESS: 0xC0DE"),
+                  ("UNKNOWN PACKAGE", "META // QRY"),
+                  ("CYBERSECURE PROTOTYPE", "CONFIDENTIAL")
+              ]
+
+              margin_x = int(80 * scale)
+              margin_y = int(60 * scale)
+              gap_x = int(40 * scale)
+              gap_y = int(40 * scale)
+              col_w = int((W - 2*margin_x - 2*gap_x) / 3)
+              row_h = int((H - 2*margin_y - gap_y) / 2)
+
+              idx = 0
+              for row in range(2):
+                  for col in range(3):
+                      x = margin_x + col*(col_w + gap_x)
+                      y = margin_y + row*(row_h + gap_y)
+                      w = col_w
+                      h = row_h
+                      pal = palettes[idx % len(palettes)]
+                      t, s = titles[idx]
+                      draw_folder(draw, x, y, w, h, t, s, pal)
+                      idx += 1
+
+              # optional final effects
+              img = img.filter(ImageFilter.GaussianBlur(radius=0))
+              img.save(out_path, "PNG")
+              print("Saved:", out_path)
+
+          if __name__ == '__main__':
+              main()
+          PY
+
+      - name: Run generator (200% scale)
+        run: |
+          python scripts/generate_highres_cyber.py output/cyber_highres.png 2
+
+      - name: Upload generated image
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyber-highres-image
+          path: output/cyber_highres.png
