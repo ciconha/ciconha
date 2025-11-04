@@ -17,7 +17,10 @@
 
 
 [<img align="left" width="390" src="https://github.com/ciconha/ciconha/blob/main/cards/ciconha.svg">](#)
-<br><br><br><br><br><br><br>
+
+[<img align="right" width="390" top="-200" src="https://github.com/user-attachments/assets/3f3f3d59-76b1-4b42-b275-c903b952d1a5">](#)
+
+<br><br><br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br>
 
 <picture>
