@@ -33,6 +33,8 @@
 > Bom caso você queira ver mais projetos e conteudos que eu desenvolvo convido você a olhar o meu [space](https://ciconha-space.vercel.app/). Lá eu sou mais interativo do que no linkedin e outras redes.
 > 
 > Meu dashboard de monitoring digital.[StatusLiàoWàng](https://status-li-o-w-ng.vercel.app/workspace/1) aqui vai ter tudo: commits, ideias, e falhas. Fora daqui, sou só mais um cara louco por API´s.
+>
+> Bom, caso você queira explorar mais conteúdos e ideias que eu desenvolvo,convido você a visitar o meu [GitLab](https://gitlab.com/ciconha).
 
 
 
