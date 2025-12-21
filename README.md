@@ -35,6 +35,8 @@
 > Meu dashboard de monitoring digital.[StatusLiàoWàng](https://status-li-o-w-ng.vercel.app/workspace/1) aqui vai ter tudo: commits, ideias, e falhas. Fora daqui, sou só mais um cara louco por API´s.
 >
 > Bom, caso você queira explorar mais conteúdos e ideias que eu desenvolvo,convido você a visitar o meu [GitLab](https://gitlab.com/ciconha).
+>
+> E se o código fosse arte? Criei um Portfólio [thug_life](https://portfolio-two-pac.vercel.app/) totalmente diferente, com uma vibe minimalista e uma homenagem visual que eu curti muito fazer. Não é sobre estética, é sobre minimalismo.
 
 
 
