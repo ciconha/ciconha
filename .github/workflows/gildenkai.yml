@@ -1,26 +1,84 @@
-name: gildenkai
+name: 🦸‍♂️ Superhero Card Generator
 
 on:
   workflow_dispatch:
     inputs:
-      usuario:
-        description: 'Usuário do GitHub'
+      name:
+        description: 'Nome do Herói (ex: H/N)'
         required: true
-        default: 'ciconha'
-      empresa:
-        description: 'Nome da empresa'
+        default: 'H/N'
+      slass:
+        description: 'Classe/Superclasse (ex: Superhero)'
         required: false
-        default: 'INSS'
-      area:
-        description: 'Área de atuação'
+        default: 'Superhero'
+      guild:
+        description: 'Guilda/Afiliação (ex: 14Ball Official)'
         required: false
-        default: 'backend'
+        default: '14Ball Official'
+      gender:
+        description: 'Gênero/Espécie (ex: Human)'
+        required: false
+        default: 'Human'
+      backstory:
+        description: 'História/Habilidade especial'
+        required: false
+        default: 'Being from another dimension, H/N doesn''t have any powers. Though, being a very good fighter mixed with having knowledge of most everything makes him a formidable adversary.'
+      
+      # Stats (1-10)
+      strength:
+        description: 'Força (1-10)'
+        required: false
+        default: '7'
+      health:
+        description: 'Saúde (1-10)'
+        required: false
+        default: '8'
+      magic_pow:
+        description: 'Poder Mágico (1-10)'
+        required: false
+        default: '5'
+      dexterity:
+        description: 'Destreza (1-10)'
+        required: false
+        default: '9'
+      agility:
+        description: 'Agilidade (1-10)'
+        required: false
+        default: '8'
+      luck:
+        description: 'Sorte (1-10)'
+        required: false
+        default: '6'
+      
+      # Skills
+      skill1:
+        description: 'Habilidade Ativa 1'
+        required: false
+        default: 'Determination'
+      skill2:
+        description: 'Habilidade Ativa 2'
+        required: false
+        default: 'Spinitzu'
+      skill3:
+        description: 'Habilidade Ativa 3'
+        required: false
+        default: ''
+      skill4:
+        description: 'Habilidade Ativa 4'
+        required: false
+        default: ''
+      
+      # Ranking
+      ranking:
+        description: 'Classificação (ex: S, A, B, C)'
+        required: false
+        default: 'A'
 
 permissions:
   contents: write
 
 jobs:
-  gerar-svg:
+  gerar-card:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,150 +90,268 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y curl jq
 
-      - name: 🔍 Buscar dados do GitHub
-        id: fetch-data
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
-        run: |
-          USER="${{ github.event.inputs.usuario }}"
-          
-          # Decide qual token usar
-          if [ -n "$GH_TOKEN" ]; then
-            TOKEN=$GH_TOKEN
-          else
-            TOKEN=${{ secrets.GITHUB_TOKEN }}
-          fi
-
-          echo "📡 Coletando dados do usuário: $USER"
-
-          # Dados principais
-          curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER" > user.json
-          curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER/repos?per_page=100" > repos.json
-          curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER/events?per_page=100" > events.json
-
-          sanitize() {
-            echo "$1" | iconv -c -t UTF-8//TRANSLIT | tr -d '\n' | sed 's/"/\\"/g'
-          }
-
-          LOGIN=$(sanitize "$(jq -r '.login' user.json)")
-          NAME=$(sanitize "$(jq -r '.name // "Usuário Desconhecido"' user.json)")
-          BIO=$(sanitize "$(jq -r '.bio // "Desenvolvedor apaixonado por tecnologia."' user.json)")
-          REPOS=$(jq -r '.public_repos' user.json)
-          FOLLOWERS=$(jq -r '.followers' user.json)
-          COMMITS=$(jq '[.[] | select(.type == "PushEvent")] | length' events.json)
-          PRS=$(jq '[.[] | select(.type == "PullRequestEvent")] | length' events.json)
-          ISSUES=$(jq '[.[] | select(.type == "IssuesEvent")] | length' events.json)
-
-          # Linguagem mais usada
-          LANG=$(jq -r '.[].language' repos.json | sort | uniq -c | sort -nr | head -1 | awk '{print $2}')
-          if [ -z "$LANG" ] || [ "$LANG" = "null" ]; then
-            LANG="Desconhecida"
-          fi
-
-          # XP e classificação
-          TOTAL_XP=$((REPOS * 50 + FOLLOWERS * 30 + COMMITS * 2 + PRS * 10 + ISSUES * 5))
-          LEVEL=$((TOTAL_XP / 1000 + 1))
-          XP_PERCENTAGE=$(( (TOTAL_XP % 1000) * 100 / 1000 ))
-
-          if [ "$REPOS" -gt 50 ]; then
-            CLASS="Arquiteto"
-          elif [ "$FOLLOWERS" -gt 100 ]; then
-            CLASS="Lenda"
-          elif [ "$REPOS" -gt 30 ] && [ "$FOLLOWERS" -gt 50 ]; then
-            CLASS="Mestre"
-          else
-            CLASS="Aventureiro"
-          fi
-
-          if [ "$REPOS" -gt 100 ]; then
-            RANK="Lendário"
-          elif [ "$REPOS" -gt 50 ]; then
-            RANK="Épico"
-          else
-            RANK="Herói"
-          fi
-
-          # Top 2 projetos
-          jq 'sort_by(-.stargazers_count) | .[0:2] | .[] | {name: .name, stars: .stargazers_count}' repos.json > top_projects.json
-
-          echo "login=$LOGIN" >> $GITHUB_OUTPUT
-          echo "name=$NAME" >> $GITHUB_OUTPUT
-          echo "bio=$BIO" >> $GITHUB_OUTPUT
-          echo "repos=$REPOS" >> $GITHUB_OUTPUT
-          echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
-          echo "commits=$COMMITS" >> $GITHUB_OUTPUT
-          echo "prs=$PRS" >> $GITHUB_OUTPUT
-          echo "issues=$ISSUES" >> $GITHUB_OUTPUT
-          echo "lang=$LANG" >> $GITHUB_OUTPUT
-          echo "total_xp=$TOTAL_XP" >> $GITHUB_OUTPUT
-          echo "level=$LEVEL" >> $GITHUB_OUTPUT
-          echo "xp_percentage=$XP_PERCENTAGE" >> $GITHUB_OUTPUT
-          echo "class=$CLASS" >> $GITHUB_OUTPUT
-          echo "rank=$RANK" >> $GITHUB_OUTPUT
-
-      - name: 🎨 Gerar SVG Dark Red Minimalista
+      - name: 🎨 Gerar Card SVG
         run: |
           mkdir -p cards
-          PROJECT1_NAME=$(jq -r '.name' top_projects.json | head -1)
-          PROJECT1_STARS=$(jq -r '.stars' top_projects.json | head -1)
-          PROJECT2_NAME=$(jq -r '.name' top_projects.json | tail -1)
-          PROJECT2_STARS=$(jq -r '.stars' top_projects.json | tail -1)
+          
+          # Processar inputs
+          NAME="${{ github.event.inputs.name }}"
+          SLASS="${{ github.event.inputs.slass }}"
+          GUIDE="${{ github.event.inputs.guild }}"
+          GENDER="${{ github.event.inputs.gender }}"
+          BACKSTORY="${{ github.event.inputs.backstory }}"
+          
+          # Stats
+          STRENGTH="${{ github.event.inputs.strength }}"
+          HEALTH="${{ github.event.inputs.health }}"
+          MAGIC_POW="${{ github.event.inputs.magic_pow }}"
+          DEXTERITY="${{ github.event.inputs.dexterity }}"
+          AGILITY="${{ github.event.inputs.agility }}"
+          LUCK="${{ github.event.inputs.luck }}"
+          
+          # Skills
+          SKILL1="${{ github.event.inputs.skill1 }}"
+          SKILL2="${{ github.event.inputs.skill2 }}"
+          SKILL3="${{ github.event.inputs.skill3 }}"
+          SKILL4="${{ github.event.inputs.skill4 }}"
+          
+          RANKING="${{ github.event.inputs.ranking }}"
+          
+          # Calcular largura das barras de stats (max: 150px)
+          STR_WIDTH=$((STRENGTH * 15))
+          HEALTH_WIDTH=$((HEALTH * 15))
+          MAGIC_WIDTH=$((MAGIC_POW * 15))
+          DEX_WIDTH=$((DEXTERITY * 15))
+          AGI_WIDTH=$((AGILITY * 15))
+          LUCK_WIDTH=$((LUCK * 15))
+          
+          # Garantir que não ultrapasse 150
+          [ $STR_WIDTH -gt 150 ] && STR_WIDTH=150
+          [ $HEALTH_WIDTH -gt 150 ] && HEALTH_WIDTH=150
+          [ $MAGIC_WIDTH -gt 150 ] && MAGIC_WIDTH=150
+          [ $DEX_WIDTH -gt 150 ] && DEX_WIDTH=150
+          [ $AGI_WIDTH -gt 150 ] && AGI_WIDTH=150
+          [ $LUCK_WIDTH -gt 150 ] && LUCK_WIDTH=150
+          
+          # Cor baseada no ranking
+          case "$RANKING" in
+            "S") RANK_COLOR="#FFD700" ;;  # Ouro
+            "A") RANK_COLOR="#FF4500" ;;  # Laranja
+            "B") RANK_COLOR="#1E90FF" ;;  # Azul
+            "C") RANK_COLOR="#32CD32" ;;  # Verde
+            *) RANK_COLOR="#8B0000" ;;    # Vermelho escuro
+          esac
+          
+          # Data atual
           CURRENT_DATE=$(date +'%d/%m/%Y')
+          
+          # Gerar SVG
+          SVG_FILE="cards/${NAME//\//_}.svg"  # Substitui / por _
+          
+          cat > "$SVG_FILE" << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+          <defs>
+            <style>
+              .title { font-family: Arial, sans-serif; font-size: 42px; font-weight: 900; fill: #000000; letter-spacing: 2px; text-transform: uppercase; }
+              .label { font-family: Arial, sans-serif; font-size: 24px; fill: #333333; letter-spacing: 1px; }
+              .value { font-family: 'Courier New', monospace; font-size: 18px; fill: #000000; font-weight: bold; }
+              .section-title { font-family: Arial, sans-serif; font-size: 28px; fill: #8B0000; letter-spacing: 1.5px; }
+              .body-text { font-family: 'Courier New', monospace; font-size: 12px; fill: #333333; }
+              .skill-text { font-family: 'Courier New', monospace; font-size: 14px; fill: #000000; font-weight: bold; }
+              .rank-text { font-family: Arial, sans-serif; font-size: 36px; fill: $RANK_COLOR; font-weight: 900; }
+            </style>
+            
+            <linearGradient id="statBar" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#8B0000" />
+              <stop offset="50%" stop-color="#B22222" />
+              <stop offset="100%" stop-color="#8B0000" />
+            </linearGradient>
+            
+            <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#F8F8F8" />
+              <stop offset="100%" stop-color="#E8E8E8" />
+            </linearGradient>
+            
+            <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect width="20" height="20" fill="#FFFFFF"/>
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#DDDDDD" stroke-width="1"/>
+            </pattern>
+          </defs>
+          
+          <!-- Fundo do card -->
+          <rect width="600" height="400" fill="url(#cardBg)" stroke="#000000" stroke-width="3"/>
+          
+          <!-- Grid sutil -->
+          <rect width="600" height="400" fill="url(#gridPattern)" opacity="0.3"/>
+          
+          <!-- Cabeçalho -->
+          <rect x="20" y="20" width="560" height="60" fill="#FFFFFF" stroke="#000000" stroke-width="2"/>
+          <text x="40" y="60" class="title">$NAME</text>
+          <text x="450" y="40" class="label">SLASS</text>
+          <text x="450" y="65" class="value">$SLASS</text>
+          
+          <!-- Informações básicas -->
+          <g transform="translate(20, 90)">
+            <text x="0" y="0" class="label">GUIDE</text>
+            <text x="100" y="0" class="value">$GUIDE</text>
+            
+            <text x="300" y="0" class="label">GEN3M3xGAGE317 3xGRA<E></text>
+            <text x="520" y="0" class="value">$GENDER</text>
+          </g>
+          
+          <!-- Linha divisória -->
+          <line x1="20" y1="100" x2="580" y2="100" stroke="#000000" stroke-width="1"/>
+          
+          <!-- História/Backstory -->
+          <rect x="20" y="110" width="560" height="60" fill="#F0F0F0" stroke="#000000" stroke-width="1"/>
+          <text x="25" y="125" class="section-title">INV$</text>
+          <text x="25" y="145" class="body-text" style="font-weight: bold;">Backstory:</text>
+          <text x="25" y="165" class="body-text">$BACKSTORY</text>
+          
+          <!-- Seção STATS/#SKILLS -->
+          <g transform="translate(20, 180)">
+            <text x="0" y="0" class="section-title">STATS/#SKILLS</text>
+            
+            <!-- Coluna de Stats -->
+            <g transform="translate(0, 30)">
+              <!-- STRENGTH -->
+              <text x="0" y="0" class="label">STRENGTH</text>
+              <rect x="150" y="-10" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
+              <rect x="150" y="-10" width="$STR_WIDTH" height="15" fill="url(#statBar)"/>
+              <text x="310" y="3" class="value">$STRENGTH/10</text>
+              
+              <!-- HEALTH -->
+              <text x="0" y="25" class="label">HEALTH</text>
+              <rect x="150" y="15" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
+              <rect x="150" y="15" width="$HEALTH_WIDTH" height="15" fill="url(#statBar)"/>
+              <text x="310" y="28" class="value">$HEALTH/10</text>
+              
+              <!-- MAGIC POW -->
+              <text x="0" y="50" class="label">MAGIC POW</text>
+              <rect x="150" y="40" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
+              <rect x="150" y="40" width="$MAGIC_WIDTH" height="15" fill="url(#statBar)"/>
+              <text x="310" y="53" class="value">$MAGIC_POW/10</text>
+              
+              <!-- DEXTERITY -->
+              <text x="0" y="75" class="label">DEXTERITY</text>
+              <rect x="150" y="65" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
+              <rect x="150" y="65" width="$DEX_WIDTH" height="15" fill="url(#statBar)"/>
+              <text x="310" y="78" class="value">$DEXTERITY/10</text>
+              
+              <!-- AGILITY -->
+              <text x="0" y="100" class="label">AGILITY</text>
+              <rect x="150" y="90" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
+              <rect x="150" y="90" width="$AGI_WIDTH" height="15" fill="url(#statBar)"/>
+              <text x="310" y="103" class="value">$AGILITY/10</text>
+              
+              <!-- LUCK -->
+              <text x="0" y="125" class="label">LUCK</text>
+              <rect x="150" y="115" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
+              <rect x="150" y="115" width="$LUCK_WIDTH" height="15" fill="url(#statBar)"/>
+              <text x="310" y="128" class="value">$LUCK/10</text>
+            </g>
+            
+            <!-- Coluna de Skills -->
+            <g transform="translate(400, 30)">
+              <text x="0" y="0" class="section-title">ACTIVE SKILLS</text>
+              
+              <!-- Container de skills -->
+              <rect x="0" y="20" width="160" height="120" fill="#F0F0F0" stroke="#000000" stroke-width="1"/>
+              
+              <!-- Lista de skills -->
+EOF
 
-          cat > cards/${{ github.event.inputs.usuario }}.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="460" height="280" viewBox="0 0 460 280">
-            <defs>
-              <linearGradient id="darkRed" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#120000"/>
-                <stop offset="100%" stop-color="#360000"/>
-              </linearGradient>
-              <style>
-                .title { font-size: 22px; font-weight: bold; fill: #FF3333; }
-                .subtitle { font-size: 13px; fill: #FF7777; }
-                .text { font-size: 11px; fill: #FFAAAA; }
-                .bar-bg { fill: #1a0000; }
-                .bar-fill { fill: #FF2222; }
-              </style>
-            </defs>
-
-            <rect width="460" height="280" rx="15" ry="15" fill="url(#darkRed)" stroke="#880000" stroke-width="3"/>
-
-            <!-- Cabeçalho -->
-            <text x="30" y="55" class="title">${{ steps.fetch-data.outputs.name }}</text>
-            <text x="30" y="75" class="subtitle">🏢 ${{ github.event.inputs.empresa }} • 💼 ${{ github.event.inputs.area }}</text>
-            <text x="30" y="93" class="subtitle">⚔️ ${{ steps.fetch-data.outputs.class }} • 🩸 ${{ steps.fetch-data.outputs.rank }}</text>
-
-            <!-- Bio -->
-            <text x="30" y="115" class="text">${{ steps.fetch-data.outputs.bio }}</text>
-
-            <!-- Linguagem + XP -->
-            <text x="30" y="140" class="text">💻 Linguagem principal: ${{ steps.fetch-data.outputs.lang }}</text>
-            <text x="30" y="158" class="text">🏆 Nível: ${{ steps.fetch-data.outputs.level }} • XP Total: ${{ steps.fetch-data.outputs.total_xp }}</text>
-
-            <!-- Barra de XP -->
-            <rect x="30" y="165" width="280" height="8" class="bar-bg" rx="4" ry="4"/>
-            <rect x="30" y="165" width="$((280 * ${{ steps.fetch-data.outputs.xp_percentage }} / 100))" height="8" class="bar-fill" rx="4" ry="4"/>
-
-            <!-- Projetos -->
-            <text x="30" y="195" class="subtitle">⭐ Destaques:</text>
-            <text x="30" y="215" class="text">• $PROJECT1_NAME — ⭐ $PROJECT1_STARS</text>
-            <text x="30" y="232" class="text">• $PROJECT2_NAME — ⭐ $PROJECT2_STARS</text>
-
-            <!-- Rodapé -->
-            <text x="230" y="265" text-anchor="middle" class="text">
-              Gerado em $CURRENT_DATE • ${{ steps.fetch-data.outputs.commits }} commits • ${{ steps.fetch-data.outputs.prs }} PRs • ${{ steps.fetch-data.outputs.issues }} issues
-            </text>
+          # Adicionar skills dinamicamente
+          SKILL_Y=40
+          if [ -n "$SKILL1" ]; then
+            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL1</text>" >> "$SVG_FILE"
+            SKILL_Y=$((SKILL_Y + 20))
+          fi
+          
+          if [ -n "$SKILL2" ]; then
+            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL2</text>" >> "$SVG_FILE"
+            SKILL_Y=$((SKILL_Y + 20))
+          fi
+          
+          if [ -n "$SKILL3" ]; then
+            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL3</text>" >> "$SVG_FILE"
+            SKILL_Y=$((SKILL_Y + 20))
+          fi
+          
+          if [ -n "$SKILL4" ]; then
+            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL4</text>" >> "$SVG_FILE"
+            SKILL_Y=$((SKILL_Y + 20))
+          fi
+          
+          # Se não houver skills suficientes, preencher com placeholder
+          SKILL_COUNT=0
+          [ -n "$SKILL1" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
+          [ -n "$SKILL2" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
+          [ -n "$SKILL3" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
+          [ -n "$SKILL4" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
+          
+          if [ $SKILL_COUNT -lt 4 ]; then
+            for ((i=SKILL_COUNT; i<4; i++)); do
+              echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\" opacity=\"0.5\">• [Empty Slot]</text>" >> "$SVG_FILE"
+              SKILL_Y=$((SKILL_Y + 20))
+            done
+          fi
+          
+          # Continuar o SVG
+          cat >> "$SVG_FILE" << EOF
+            </g>
+          </g>
+          
+          <!-- Rodapé com Ranking -->
+          <g transform="translate(20, 330)">
+            <!-- Superhero text -->
+            <text x="0" y="0" class="section-title">SUPERHERO</text>
+            
+            <!-- Ranking section -->
+            <rect x="400" y="-30" width="160" height="50" fill="#FFFFFF" stroke="#000000" stroke-width="2"/>
+            <text x="410" y="-15" class="label">RANKING</text>
+            <text x="480" y="10" class="rank-text">$RANKING</text>
+            
+            <!-- Data -->
+            <text x="0" y="40" class="body-text">Generated: $CURRENT_DATE</text>
+            <text x="400" y="40" class="body-text">Card ID: ${NAME}-$(date +%s | tail -c 4)</text>
+          </g>
+          
+          <!-- Elementos decorativos -->
+          <!-- Cantos -->
+          <rect x="10" y="10" width="10" height="10" fill="#8B0000"/>
+          <rect x="580" y="10" width="10" height="10" fill="#8B0000"/>
+          <rect x="10" y="380" width="10" height="10" fill="#8B0000"/>
+          <rect x="580" y="380" width="10" height="10" fill="#8B0000"/>
+          
+          <!-- Linhas de borda -->
+          <line x1="20" y1="20" x2="40" y2="20" stroke="#8B0000" stroke-width="2"/>
+          <line x1="20" y1="20" x2="20" y2="40" stroke="#8B0000" stroke-width="2"/>
+          <line x1="580" y1="20" x2="560" y2="20" stroke="#8B0000" stroke-width="2"/>
+          <line x1="580" y1="20" x2="580" y2="40" stroke="#8B0000" stroke-width="2"/>
+          <line x1="20" y1="380" x2="40" y2="380" stroke="#8B0000" stroke-width="2"/>
+          <line x1="20" y1="380" x2="20" y2="360" stroke="#8B0000" stroke-width="2"/>
+          <line x1="580" y1="380" x2="560" y2="380" stroke="#8B0000" stroke-width="2"/>
+          <line x1="580" y1="380" x2="580" y2="360" stroke="#8B0000" stroke-width="2"/>
+          
           </svg>
           EOF
-
-          echo "✅ SVG minimalista Dark Red gerado com sucesso!"
+          
+          echo "✅ Card gerado com sucesso: $SVG_FILE"
 
       - name: 💾 Commit e Push automático
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add cards/
-          git commit -m "🩸 Atualização do cartão da guilda para ${{ github.event.inputs.usuario }}" || echo "Nenhuma mudança detectada"
-          git push
+          
+          # Verificar se há mudanças
+          if git diff --quiet; then
+            echo "⚠️ Nenhuma mudança detectada"
+          else
+            git add cards/
+            git commit -m "🦸‍♂️ Novo card superhero gerado: ${{ github.event.inputs.name }}"
+            git push
+            echo "✅ Card salvo no repositório!"
+          fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
