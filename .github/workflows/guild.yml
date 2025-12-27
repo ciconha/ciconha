@@ -1,4 +1,4 @@
-name: Recreate Guild Card (Organized)
+name: Recreate Guild Card (Complete)
 
 on:
   workflow_dispatch:
@@ -20,9 +20,9 @@ permissions:
   contents: write
 
 env:
-  CHARACTER_FILE: character.yml
-  OUTPUT_SVG: cards/recreated_card.svg
-  OUTPUT_CSV: cards/recreated_card.csv
+  OUTPUT_DIR: cards
+  OUTPUT_SVG: ${{ env.OUTPUT_DIR }}/recreated_card.svg
+  OUTPUT_CSV: ${{ env.OUTPUT_DIR }}/recreated_card.csv
 
 jobs:
   validate:
@@ -34,7 +34,7 @@ jobs:
       - name: Confirm manual run
         run: |
           echo "✅ Workflow disparado manualmente com sucesso"
-          echo "Inputs recebidos:"
+          echo "Inputs:"
           echo "  usuario: ${{ github.event.inputs.usuario }}"
           echo "  empresa: ${{ github.event.inputs.empresa }}"
           echo "  cargo: ${{ github.event.inputs.cargo }}"
@@ -45,6 +45,7 @@ jobs:
     needs: validate
     env:
       API_TOKEN: ${{ secrets.TSUKUYOMI_CICONHA }}
+      OUTPUT_DIR: ${{ env.OUTPUT_DIR }}
       OUTPUT_SVG: ${{ env.OUTPUT_SVG }}
       OUTPUT_CSV: ${{ env.OUTPUT_CSV }}
     steps:
@@ -59,7 +60,7 @@ jobs:
       - name: Fetch GitHub data and prepare variables
         id: fetch-data
         run: |
-          # token fallback
+          # Token fallback: prefer secret TSUKUYOMI_CICONHA, senão usar GITHUB_TOKEN
           if [ -n "${{ env.API_TOKEN }}" ]; then
             TOKEN="${{ env.API_TOKEN }}"
           else
@@ -72,6 +73,8 @@ jobs:
           fi
 
           USER="${{ github.event.inputs.usuario || 'ciconha' }}"
+          echo "Collecting data for user: $USER"
+
           curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER" > user.json || true
           curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER/repos?per_page=100&sort=updated" > repos.json || true
           curl -s -H "Authorization: token $TOKEN" "https://api.github.com/users/$USER/events?per_page=100" > events.json || true
@@ -121,7 +124,7 @@ jobs:
 
       - name: Generate SVG and CSV
         run: |
-          mkdir -p cards
+          mkdir -p "${OUTPUT_DIR}"
           USERNAME="${{ steps.fetch-data.outputs.login }}"
           NAME="${{ steps.fetch-data.outputs.name }}"
           BIO="${{ steps.fetch-data.outputs.bio }}"
@@ -145,7 +148,7 @@ jobs:
           CURRENT_DATE=$(date +'%d/%m/%Y')
           BAR_WIDTH=$((400 * XP_PERCENTAGE / 100)); [ $BAR_WIDTH -gt 400 ] && BAR_WIDTH=400
 
-          SVG_FILE="cards/${USERNAME}.svg"
+          SVG_FILE="${OUTPUT_DIR}/${USERNAME}.svg"
           cat > "$SVG_FILE" <<EOF
 <svg xmlns="http://www.w3.org/2000/svg" width="460" height="280" viewBox="0 0 460 280">
   <defs>
@@ -195,8 +198,7 @@ jobs:
 </svg>
 EOF
 
-          # CSV output (one-line summary)
-          CSV_FILE="cards/${USERNAME}.csv"
+          CSV_FILE="${OUTPUT_DIR}/${USERNAME}.csv"
           echo "username,name,repos,followers,commits,prs,issues,lang,level,total_xp,xp_percentage,class,rank,date" > "$CSV_FILE"
           echo "${USERNAME},\"${NAME}\",${REPOS},${FOLLOWERS},${COMMITS},${PRS},${ISSUES},\"${LANG}\",${LEVEL},${TOTAL_XP},${XP_PERCENTAGE},${CLASS},${RANK},${CURRENT_DATE}" >> "$CSV_FILE"
 
@@ -205,25 +207,25 @@ EOF
 
       - name: List generated files
         run: |
-          ls -la cards || true
+          ls -la "${OUTPUT_DIR}" || true
           echo "---- SVG preview ----"
-          head -n 40 cards/*.svg || true
+          head -n 40 "${OUTPUT_DIR}"/*.svg || true
           echo "---- CSV preview ----"
-          cat cards/*.csv || true
+          cat "${OUTPUT_DIR}"/*.csv || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: guild-card-assets
-          path: cards/
+          path: "${OUTPUT_DIR}/"
 
       - name: Optional commit back to repo
         if: ${{ github.ref == 'refs/heads/' + github.repository_owner || always() }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          if git status --porcelain | grep -q cards/; then
-            git add cards/
+          if git status --porcelain | grep -q "${OUTPUT_DIR}/"; then
+            git add "${OUTPUT_DIR}/"
             git commit -m "🎨 Atualização do cartão da guilda para ${{ github.event.inputs.usuario || 'ciconha' }}"
             git push origin HEAD || echo "Push falhou (verifique permissões)"
           else
