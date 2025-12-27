@@ -1,357 +1,313 @@
-name: 🦸‍♂️ Superhero Card Generator
+name: "👨‍💻 DEV HERO CARD"
 
 on:
   workflow_dispatch:
     inputs:
-      name:
-        description: 'Nome do Herói (ex: H/N)'
+      github_user:
+        description: 'Usuário do GitHub'
         required: true
-        default: 'H/N'
-      slass:
-        description: 'Classe/Superclasse (ex: Superhero)'
-        required: false
-        default: 'Superhero'
-      guild:
-        description: 'Guilda/Afiliação (ex: 14Ball Official)'
-        required: false
-        default: '14Ball Official'
-      gender:
-        description: 'Gênero/Espécie (ex: Human)'
-        required: false
-        default: 'Human'
-      backstory:
-        description: 'História/Habilidade especial'
-        required: false
-        default: 'Being from another dimension, H/N doesn''t have any powers. Though, being a very good fighter mixed with having knowledge of most everything makes him a formidable adversary.'
-      
-      # Stats (1-10)
-      strength:
-        description: 'Força (1-10)'
-        required: false
-        default: '7'
-      health:
-        description: 'Saúde (1-10)'
-        required: false
-        default: '8'
-      magic_pow:
-        description: 'Poder Mágico (1-10)'
-        required: false
-        default: '5'
-      dexterity:
-        description: 'Destreza (1-10)'
-        required: false
-        default: '9'
-      agility:
-        description: 'Agilidade (1-10)'
-        required: false
-        default: '8'
-      luck:
-        description: 'Sorte (1-10)'
-        required: false
-        default: '6'
-      
-      # Skills
-      skill1:
-        description: 'Habilidade Ativa 1'
-        required: false
-        default: 'Determination'
-      skill2:
-        description: 'Habilidade Ativa 2'
-        required: false
-        default: 'Spinitzu'
-      skill3:
-        description: 'Habilidade Ativa 3'
+        default: 'ciconha'
+      full_name:
+        description: 'Nome completo'
         required: false
         default: ''
-      skill4:
-        description: 'Habilidade Ativa 4'
+      company:
+        description: 'Empresa/Organização'
         required: false
-        default: ''
+        default: 'INSS'
+      role:
+        description: 'Cargo/Função'
+        required: false
+        default: 'Desenvolvedor'
+      location:
+        description: 'Localização'
+        required: false
+        default: 'Brasil'
       
-      # Ranking
-      ranking:
-        description: 'Classificação (ex: S, A, B, C)'
+      # Tech Stack
+      main_language:
+        description: 'Linguagem principal'
         required: false
-        default: 'A'
+        default: 'JavaScript'
+      framework:
+        description: 'Framework principal'
+        required: false
+        default: 'React'
+      database:
+        description: 'Banco de dados'
+        required: false
+        default: 'PostgreSQL'
+      
+      # Stats
+      experience:
+        description: 'Anos de experiência'
+        required: false
+        default: '2'
+      availability:
+        description: 'Disponibilidade (%)'
+        required: false
+        default: '80'
 
 permissions:
   contents: write
 
 jobs:
-  gerar-card:
+  create-dev-card:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: 🧩 Checkout do repositório
+      - name: 📥 Checkout do repositório
         uses: actions/checkout@v4
-
+      
       - name: ⚙️ Instalar dependências
         run: |
           sudo apt-get update -y
           sudo apt-get install -y curl jq
-
-      - name: 🎨 Gerar Card SVG
+      
+      - name: 🔍 Buscar dados do GitHub
+        id: github-data
+        env:
+          GH_TOKEN: ${{ secrets.Ciconha_tsukuyomi }}
         run: |
-          mkdir -p cards
+          USER="${{ github.event.inputs.github_user }}"
           
-          # Processar inputs
-          NAME="${{ github.event.inputs.name }}"
-          SLASS="${{ github.event.inputs.slass }}"
-          GUIDE="${{ github.event.inputs.guild }}"
-          GENDER="${{ github.event.inputs.gender }}"
-          BACKSTORY="${{ github.event.inputs.backstory }}"
+          echo "📡 Buscando dados do GitHub para: $USER"
           
-          # Stats
-          STRENGTH="${{ github.event.inputs.strength }}"
-          HEALTH="${{ github.event.inputs.health }}"
-          MAGIC_POW="${{ github.event.inputs.magic_pow }}"
-          DEXTERITY="${{ github.event.inputs.dexterity }}"
-          AGILITY="${{ github.event.inputs.agility }}"
-          LUCK="${{ github.event.inputs.luck }}"
+          # Buscar dados do usuário
+          if [ -n "$GH_TOKEN" ]; then
+            curl -s -H "Authorization: token $GH_TOKEN" \
+                 "https://api.github.com/users/$USER" > user.json
+            curl -s -H "Authorization: token $GH_TOKEN" \
+                 "https://api.github.com/users/$USER/repos?sort=stars&per_page=5" > repos.json
+          else
+            curl -s "https://api.github.com/users/$USER" > user.json
+            curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=5" > repos.json
+          fi
           
-          # Skills
-          SKILL1="${{ github.event.inputs.skill1 }}"
-          SKILL2="${{ github.event.inputs.skill2 }}"
-          SKILL3="${{ github.event.inputs.skill3 }}"
-          SKILL4="${{ github.event.inputs.skill4 }}"
+          # Extrair dados
+          AVATAR_URL=$(jq -r '.avatar_url' user.json | sed 's/\?v=.*//')
+          AVATAR_URL="${AVATAR_URL}&size=150"
           
-          RANKING="${{ github.event.inputs.ranking }}"
+          BIO=$(jq -r '.bio // "Developer passionate about technology."' user.json)
+          if [ "$BIO" = "null" ]; then
+            BIO="Developer passionate about technology."
+          fi
           
-          # Calcular largura das barras de stats (max: 150px)
-          STR_WIDTH=$((STRENGTH * 15))
-          HEALTH_WIDTH=$((HEALTH * 15))
-          MAGIC_WIDTH=$((MAGIC_POW * 15))
-          DEX_WIDTH=$((DEXTERITY * 15))
-          AGI_WIDTH=$((AGILITY * 15))
-          LUCK_WIDTH=$((LUCK * 15))
+          # Nome (usar do GitHub se não fornecido)
+          GITHUB_NAME=$(jq -r '.name // ""' user.json)
+          if [ -z "$GITHUB_NAME" ] || [ "$GITHUB_NAME" = "null" ]; then
+            GITHUB_NAME="$USER"
+          fi
           
-          # Garantir que não ultrapasse 150
-          [ $STR_WIDTH -gt 150 ] && STR_WIDTH=150
-          [ $HEALTH_WIDTH -gt 150 ] && HEALTH_WIDTH=150
-          [ $MAGIC_WIDTH -gt 150 ] && MAGIC_WIDTH=150
-          [ $DEX_WIDTH -gt 150 ] && DEX_WIDTH=150
-          [ $AGI_WIDTH -gt 150 ] && AGI_WIDTH=150
-          [ $LUCK_WIDTH -gt 150 ] && LUCK_WIDTH=150
+          # Contar repositórios e seguidores
+          PUBLIC_REPOS=$(jq -r '.public_repos // 0' user.json)
+          FOLLOWERS=$(jq -r '.followers // 0' user.json)
           
-          # Cor baseada no ranking
-          case "$RANKING" in
-            "S") RANK_COLOR="#FFD700" ;;  # Ouro
-            "A") RANK_COLOR="#FF4500" ;;  # Laranja
-            "B") RANK_COLOR="#1E90FF" ;;  # Azul
-            "C") RANK_COLOR="#32CD32" ;;  # Verde
-            *) RANK_COLOR="#8B0000" ;;    # Vermelho escuro
-          esac
+          # Top 3 projetos com mais estrelas
+          echo '[]' > top_projects.json
+          if [ -f repos.json ] && [ -s repos.json ]; then
+            jq '[.[0:3] | .[] | {name: .name, stars: (.stargazers_count // 0), language: (.language // "N/A")}]' repos.json > top_projects.json
+          fi
           
-          # Data atual
-          CURRENT_DATE=$(date +'%d/%m/%Y')
+          echo "avatar_url=$AVATAR_URL" >> $GITHUB_OUTPUT
+          echo "github_name=$GITHUB_NAME" >> $GITHUB_OUTPUT
+          echo "bio=$BIO" >> $GITHUB_OUTPUT
+          echo "public_repos=$PUBLIC_REPOS" >> $GITHUB_OUTPUT
+          echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
           
-          # Gerar SVG
-          SVG_FILE="cards/${NAME//\//_}.svg"  # Substitui / por _
+          echo "✅ Dados coletados:"
+          echo "👤 Nome: $GITHUB_NAME"
+          echo "📝 Bio: $BIO"
+          echo "📦 Repos: $PUBLIC_REPOS"
+          echo "👥 Seguidores: $FOLLOWERS"
+      
+      - name: 🎨 Criar diretório para cards
+        run: mkdir -p cards
+      
+      - name: 🖼️ Gerar Card Dev Minimalista
+        run: |
+          # Dados do GitHub
+          AVATAR_URL="${{ steps.github-data.outputs.avatar_url }}"
+          GITHUB_NAME="${{ steps.github-data.outputs.github_name }}"
+          BIO="${{ steps.github-data.outputs.bio }}"
+          PUBLIC_REPOS="${{ steps.github-data.outputs.public_repos }}"
+          FOLLOWERS="${{ steps.github-data.outputs.followers }}"
           
+          # Inputs do usuário
+          FULL_NAME="${{ github.event.inputs.full_name }}"
+          if [ -z "$FULL_NAME" ] || [ "$FULL_NAME" = "null" ]; then
+            FULL_NAME="$GITHUB_NAME"
+          fi
+          
+          COMPANY="${{ github.event.inputs.company }}"
+          ROLE="${{ github.event.inputs.role }}"
+          LOCATION="${{ github.event.inputs.location }}"
+          MAIN_LANG="${{ github.event.inputs.main_language }}"
+          FRAMEWORK="${{ github.event.inputs.framework }}"
+          DATABASE="${{ github.event.inputs.database }}"
+          EXPERIENCE="${{ github.event.inputs.experience }}"
+          AVAILABILITY="${{ github.event.inputs.availability }}"
+          
+          # Ler projetos top
+          PROJECT1_NAME=$(jq -r '.[0].name // ""' top_projects.json 2>/dev/null)
+          PROJECT1_STARS=$(jq -r '.[0].stars // 0' top_projects.json 2>/dev/null)
+          PROJECT1_LANG=$(jq -r '.[0].language // ""' top_projects.json 2>/dev/null)
+          
+          PROJECT2_NAME=$(jq -r '.[1].name // ""' top_projects.json 2>/dev/null)
+          PROJECT2_STARS=$(jq -r '.[1].stars // 0' top_projects.json 2>/dev/null)
+          PROJECT2_LANG=$(jq -r '.[1].language // ""' top_projects.json 2>/dev/null)
+          
+          PROJECT3_NAME=$(jq -r '.[2].name // ""' top_projects.json 2>/dev/null)
+          PROJECT3_STARS=$(jq -r '.[2].stars // 0' top_projects.json 2>/dev/null)
+          PROJECT3_LANG=$(jq -r '.[2].language // ""' top_projects.json 2>/dev/null)
+          
+          # Valores padrão para projetos
+          [ -z "$PROJECT1_NAME" ] && PROJECT1_NAME="No projects" && PROJECT1_STARS=0 && PROJECT1_LANG="N/A"
+          [ -z "$PROJECT2_NAME" ] && PROJECT2_NAME="No projects" && PROJECT2_STARS=0 && PROJECT2_LANG="N/A"
+          [ -z "$PROJECT3_NAME" ] && PROJECT3_NAME="No projects" && PROJECT3_STARS=0 && PROJECT3_LANG="N/A"
+          
+          # Data
+          DATE=$(date +'%d/%m/%Y')
+          FILENAME=$(echo "$FULL_NAME" | tr ' ' '_' | tr -cd '[:alnum:]_')
+          SVG_FILE="cards/${FILENAME}_dev.svg"
+          
+          # Criar SVG Minimalista
           cat > "$SVG_FILE" << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="500" height="300" viewBox="0 0 500 300">
           <defs>
             <style>
-              .title { font-family: Arial, sans-serif; font-size: 42px; font-weight: 900; fill: #000000; letter-spacing: 2px; text-transform: uppercase; }
-              .label { font-family: Arial, sans-serif; font-size: 24px; fill: #333333; letter-spacing: 1px; }
-              .value { font-family: 'Courier New', monospace; font-size: 18px; fill: #000000; font-weight: bold; }
-              .section-title { font-family: Arial, sans-serif; font-size: 28px; fill: #8B0000; letter-spacing: 1.5px; }
-              .body-text { font-family: 'Courier New', monospace; font-size: 12px; fill: #333333; }
-              .skill-text { font-family: 'Courier New', monospace; font-size: 14px; fill: #000000; font-weight: bold; }
-              .rank-text { font-family: Arial, sans-serif; font-size: 36px; fill: $RANK_COLOR; font-weight: 900; }
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400&display=swap');
+              
+              .name { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 600; fill: #1a1a1a; }
+              .title { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; fill: #666666; }
+              .label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400; fill: #888888; letter-spacing: 0.5px; text-transform: uppercase; }
+              .value { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: #333333; }
+              .bio { font-family: 'Inter', sans-serif; font-size: 12px; fill: #444444; line-height: 1.4; }
+              .project-name { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #1a1a1a; }
+              .project-stats { font-family: 'Inter', sans-serif; font-size: 9px; fill: #666666; }
             </style>
             
-            <linearGradient id="statBar" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#8B0000" />
-              <stop offset="50%" stop-color="#B22222" />
-              <stop offset="100%" stop-color="#8B0000" />
+            <!-- Gradiente sutil -->
+            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#f8f9fa"/>
             </linearGradient>
             
-            <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#F8F8F8" />
-              <stop offset="100%" stop-color="#E8E8E8" />
+            <linearGradient id="expBar" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#2563eb"/>
+              <stop offset="100%" stop-color="#3b82f6"/>
             </linearGradient>
-            
-            <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
-              <rect width="20" height="20" fill="#FFFFFF"/>
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#DDDDDD" stroke-width="1"/>
-            </pattern>
           </defs>
           
-          <!-- Fundo do card -->
-          <rect width="600" height="400" fill="url(#cardBg)" stroke="#000000" stroke-width="3"/>
+          <!-- Fundo clean -->
+          <rect width="500" height="300" fill="url(#bgGradient)"/>
+          <rect x="20" y="20" width="460" height="260" rx="12" fill="white" stroke="#e5e7eb" stroke-width="1"/>
           
-          <!-- Grid sutil -->
-          <rect width="600" height="400" fill="url(#gridPattern)" opacity="0.3"/>
+          <!-- Avatar -->
+          <defs>
+            <clipPath id="avatarClip">
+              <circle cx="70" cy="70" r="30"/>
+            </clipPath>
+          </defs>
           
-          <!-- Cabeçalho -->
-          <rect x="20" y="20" width="560" height="60" fill="#FFFFFF" stroke="#000000" stroke-width="2"/>
-          <text x="40" y="60" class="title">$NAME</text>
-          <text x="450" y="40" class="label">SLASS</text>
-          <text x="450" y="65" class="value">$SLASS</text>
+          <circle cx="70" cy="70" r="32" fill="#f3f4f6"/>
+          <circle cx="70" cy="70" r="30" fill="#f8fafc"/>
+          <image href="$AVATAR_URL" x="40" y="40" width="60" height="60" clip-path="url(#avatarClip)"/>
           
-          <!-- Informações básicas -->
-          <g transform="translate(20, 90)">
-            <text x="0" y="0" class="label">GUIDE</text>
-            <text x="100" y="0" class="value">$GUIDE</text>
+          <!-- Nome e título -->
+          <text x="120" y="55" class="name">$FULL_NAME</text>
+          <text x="120" y="75" class="title">$ROLE • $COMPANY</text>
+          
+          <!-- Bio -->
+          <text x="120" y="95" class="label">SOBRE</text>
+          <text x="120" y="110" class="bio" width="200">$BIO</text>
+          
+          <!-- Stats do GitHub -->
+          <g transform="translate(120, 130)">
+            <rect x="0" y="0" width="100" height="30" rx="6" fill="#f8fafc"/>
+            <text x="10" y="12" class="label">Repos</text>
+            <text x="10" y="24" class="value" font-weight="600">$PUBLIC_REPOS</text>
             
-            <text x="300" y="0" class="label">GEN3M3xGAGE317 3xGRA<E></text>
-            <text x="520" y="0" class="value">$GENDER</text>
+            <rect x="110" y="0" width="100" height="30" rx="6" fill="#f8fafc"/>
+            <text x="120" y="12" class="label">Followers</text>
+            <text x="120" y="24" class="value" font-weight="600">$FOLLOWERS</text>
+            
+            <rect x="220" y="0" width="100" height="30" rx="6" fill="#f8fafc"/>
+            <text x="230" y="12" class="label">Exp</text>
+            <text x="230" y="24" class="value" font-weight="600">${EXPERIENCE}y</text>
           </g>
           
-          <!-- Linha divisória -->
-          <line x1="20" y1="100" x2="580" y2="100" stroke="#000000" stroke-width="1"/>
-          
-          <!-- História/Backstory -->
-          <rect x="20" y="110" width="560" height="60" fill="#F0F0F0" stroke="#000000" stroke-width="1"/>
-          <text x="25" y="125" class="section-title">INV$</text>
-          <text x="25" y="145" class="body-text" style="font-weight: bold;">Backstory:</text>
-          <text x="25" y="165" class="body-text">$BACKSTORY</text>
-          
-          <!-- Seção STATS/#SKILLS -->
-          <g transform="translate(20, 180)">
-            <text x="0" y="0" class="section-title">STATS/#SKILLS</text>
+          <!-- Tech Stack -->
+          <g transform="translate(20, 170)">
+            <text x="0" y="0" class="label">TECH STACK</text>
             
-            <!-- Coluna de Stats -->
-            <g transform="translate(0, 30)">
-              <!-- STRENGTH -->
-              <text x="0" y="0" class="label">STRENGTH</text>
-              <rect x="150" y="-10" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
-              <rect x="150" y="-10" width="$STR_WIDTH" height="15" fill="url(#statBar)"/>
-              <text x="310" y="3" class="value">$STRENGTH/10</text>
+            <g transform="translate(0, 15)">
+              <rect x="0" y="0" width="140" height="25" rx="4" fill="#eff6ff"/>
+              <text x="10" y="16" class="value">$MAIN_LANG</text>
               
-              <!-- HEALTH -->
-              <text x="0" y="25" class="label">HEALTH</text>
-              <rect x="150" y="15" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
-              <rect x="150" y="15" width="$HEALTH_WIDTH" height="15" fill="url(#statBar)"/>
-              <text x="310" y="28" class="value">$HEALTH/10</text>
+              <rect x="150" y="0" width="140" height="25" rx="4" fill="#f0f9ff"/>
+              <text x="160" y="16" class="value">$FRAMEWORK</text>
               
-              <!-- MAGIC POW -->
-              <text x="0" y="50" class="label">MAGIC POW</text>
-              <rect x="150" y="40" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
-              <rect x="150" y="40" width="$MAGIC_WIDTH" height="15" fill="url(#statBar)"/>
-              <text x="310" y="53" class="value">$MAGIC_POW/10</text>
-              
-              <!-- DEXTERITY -->
-              <text x="0" y="75" class="label">DEXTERITY</text>
-              <rect x="150" y="65" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
-              <rect x="150" y="65" width="$DEX_WIDTH" height="15" fill="url(#statBar)"/>
-              <text x="310" y="78" class="value">$DEXTERITY/10</text>
-              
-              <!-- AGILITY -->
-              <text x="0" y="100" class="label">AGILITY</text>
-              <rect x="150" y="90" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
-              <rect x="150" y="90" width="$AGI_WIDTH" height="15" fill="url(#statBar)"/>
-              <text x="310" y="103" class="value">$AGILITY/10</text>
-              
-              <!-- LUCK -->
-              <text x="0" y="125" class="label">LUCK</text>
-              <rect x="150" y="115" width="150" height="15" fill="#E0E0E0" stroke="#000000" stroke-width="1"/>
-              <rect x="150" y="115" width="$LUCK_WIDTH" height="15" fill="url(#statBar)"/>
-              <text x="310" y="128" class="value">$LUCK/10</text>
-            </g>
-            
-            <!-- Coluna de Skills -->
-            <g transform="translate(400, 30)">
-              <text x="0" y="0" class="section-title">ACTIVE SKILLS</text>
-              
-              <!-- Container de skills -->
-              <rect x="0" y="20" width="160" height="120" fill="#F0F0F0" stroke="#000000" stroke-width="1"/>
-              
-              <!-- Lista de skills -->
-EOF
-
-          # Adicionar skills dinamicamente
-          SKILL_Y=40
-          if [ -n "$SKILL1" ]; then
-            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL1</text>" >> "$SVG_FILE"
-            SKILL_Y=$((SKILL_Y + 20))
-          fi
-          
-          if [ -n "$SKILL2" ]; then
-            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL2</text>" >> "$SVG_FILE"
-            SKILL_Y=$((SKILL_Y + 20))
-          fi
-          
-          if [ -n "$SKILL3" ]; then
-            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL3</text>" >> "$SVG_FILE"
-            SKILL_Y=$((SKILL_Y + 20))
-          fi
-          
-          if [ -n "$SKILL4" ]; then
-            echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\">• $SKILL4</text>" >> "$SVG_FILE"
-            SKILL_Y=$((SKILL_Y + 20))
-          fi
-          
-          # Se não houver skills suficientes, preencher com placeholder
-          SKILL_COUNT=0
-          [ -n "$SKILL1" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
-          [ -n "$SKILL2" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
-          [ -n "$SKILL3" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
-          [ -n "$SKILL4" ] && SKILL_COUNT=$((SKILL_COUNT + 1))
-          
-          if [ $SKILL_COUNT -lt 4 ]; then
-            for ((i=SKILL_COUNT; i<4; i++)); do
-              echo "              <text x=\"10\" y=\"$SKILL_Y\" class=\"skill-text\" opacity=\"0.5\">• [Empty Slot]</text>" >> "$SVG_FILE"
-              SKILL_Y=$((SKILL_Y + 20))
-            done
-          fi
-          
-          # Continuar o SVG
-          cat >> "$SVG_FILE" << EOF
+              <rect x="300" y="0" width="140" height="25" rx="4" fill="#f0fdf4"/>
+              <text x="310" y="16" class="value">$DATABASE</text>
             </g>
           </g>
           
-          <!-- Rodapé com Ranking -->
-          <g transform="translate(20, 330)">
-            <!-- Superhero text -->
-            <text x="0" y="0" class="section-title">SUPERHERO</text>
-            
-            <!-- Ranking section -->
-            <rect x="400" y="-30" width="160" height="50" fill="#FFFFFF" stroke="#000000" stroke-width="2"/>
-            <text x="410" y="-15" class="label">RANKING</text>
-            <text x="480" y="10" class="rank-text">$RANKING</text>
-            
-            <!-- Data -->
-            <text x="0" y="40" class="body-text">Generated: $CURRENT_DATE</text>
-            <text x="400" y="40" class="body-text">Card ID: ${NAME}-$(date +%s | tail -c 4)</text>
+          <!-- Barra de experiência -->
+          <g transform="translate(20, 220)">
+            <text x="0" y="0" class="label">AVAILABILITY</text>
+            <rect x="0" y="10" width="320" height="8" rx="4" fill="#e5e7eb"/>
+            <rect x="0" y="10" width="$((320 * AVAILABILITY / 100))" height="8" rx="4" fill="url(#expBar)"/>
+            <text x="330" y="15" class="value">${AVAILABILITY}%</text>
           </g>
           
-          <!-- Elementos decorativos -->
-          <!-- Cantos -->
-          <rect x="10" y="10" width="10" height="10" fill="#8B0000"/>
-          <rect x="580" y="10" width="10" height="10" fill="#8B0000"/>
-          <rect x="10" y="380" width="10" height="10" fill="#8B0000"/>
-          <rect x="580" y="380" width="10" height="10" fill="#8B0000"/>
+          <!-- Projetos Top -->
+          <g transform="translate(20, 245)">
+            <text x="0" y="0" class="label">TOP PROJECTS</text>
+            
+            <g transform="translate(0, 15)">
+              <!-- Projeto 1 -->
+              <rect x="0" y="0" width="140" height="40" rx="6" fill="#f8fafc"/>
+              <text x="10" y="15" class="project-name">$PROJECT1_NAME</text>
+              <text x="10" y="28" class="project-stats">⭐ $PROJECT1_STARS • $PROJECT1_LANG</text>
+              
+              <!-- Projeto 2 -->
+              <rect x="150" y="0" width="140" height="40" rx="6" fill="#f8fafc"/>
+              <text x="160" y="15" class="project-name">$PROJECT2_NAME</text>
+              <text x="160" y="28" class="project-stats">⭐ $PROJECT2_STARS • $PROJECT2_LANG</text>
+              
+              <!-- Projeto 3 -->
+              <rect x="300" y="0" width="140" height="40" rx="6" fill="#f8fafc"/>
+              <text x="310" y="15" class="project-name">$PROJECT3_NAME</text>
+              <text x="310" y="28" class="project-stats">⭐ $PROJECT3_STARS • $PROJECT3_LANG</text>
+            </g>
+          </g>
           
-          <!-- Linhas de borda -->
-          <line x1="20" y1="20" x2="40" y2="20" stroke="#8B0000" stroke-width="2"/>
-          <line x1="20" y1="20" x2="20" y2="40" stroke="#8B0000" stroke-width="2"/>
-          <line x1="580" y1="20" x2="560" y2="20" stroke="#8B0000" stroke-width="2"/>
-          <line x1="580" y1="20" x2="580" y2="40" stroke="#8B0000" stroke-width="2"/>
-          <line x1="20" y1="380" x2="40" y2="380" stroke="#8B0000" stroke-width="2"/>
-          <line x1="20" y1="380" x2="20" y2="360" stroke="#8B0000" stroke-width="2"/>
-          <line x1="580" y1="380" x2="560" y2="380" stroke="#8B0000" stroke-width="2"/>
-          <line x1="580" y1="380" x2="580" y2="360" stroke="#8B0000" stroke-width="2"/>
+          <!-- Footer -->
+          <g transform="translate(20, 290)">
+            <text x="0" y="0" class="label">📍 $LOCATION</text>
+            <text x="350" y="0" class="label" text-anchor="end">Updated: $DATE</text>
+          </g>
+          
+          <!-- Linhas decorativas minimalistas -->
+          <line x1="20" y1="165" x2="480" y2="165" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="20" y1="215" x2="480" y2="215" stroke="#e5e7eb" stroke-width="1"/>
+          <line x1="20" y1="240" x2="480" y2="240" stroke="#e5e7eb" stroke-width="1"/>
           
           </svg>
           EOF
           
-          echo "✅ Card gerado com sucesso: $SVG_FILE"
-
-      - name: 💾 Commit e Push automático
+          echo "✅ Card Dev criado: $SVG_FILE"
+          echo "👨‍💻 Design: Minimalista Dev"
+          echo "📊 Stats: $PUBLIC_REPOS repos, $FOLLOWERS followers"
+          echo "⭐ Top Projeto: $PROJECT1_NAME ($PROJECT1_STARS ⭐)"
+      
+      - name: 📤 Salvar card
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           
-          # Verificar se há mudanças
-          if git diff --quiet; then
-            echo "⚠️ Nenhuma mudança detectada"
-          else
-            git add cards/
-            git commit -m "🦸‍♂️ Novo card superhero gerado: ${{ github.event.inputs.name }}"
-            git push
-            echo "✅ Card salvo no repositório!"
-          fi
-        env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          git add cards/
+          git commit -m "👨‍💻 Add dev card: ${{ github.event.inputs.github_user }}" || echo "Sem alterações"
+          git push || echo "Push falhou ou sem alterações"
+          echo "✅ Workflow completo!"
