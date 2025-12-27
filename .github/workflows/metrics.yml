@@ -18,7 +18,7 @@ jobs:
       - name: Overview
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.TSUKUYOMI_CICONHA }}
+          token: ${{ secrets.Ciconha_tsukuyomi }}
           user: ciconha
           config_timezone: America/Sao_Paulo
           filename: github-metrics.svg
@@ -50,7 +50,7 @@ jobs:
       - name: Achievements
         uses: lowlighter/metrics@master
         with:
-         token: ${{ secrets.TSUKUYOMI_CICONHA }}
+         token: ${{ secrets.Ciconha_tsukuyomi }}
          user: ciconha
          filename: achievements.svg
          plugin_achievements: yes
@@ -63,7 +63,7 @@ jobs:
       - name: Contributors
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.TSUKUYOMI_CICONHA }}
+          token: ${{ secrets.Ciconha_tsukuyomi }}
           user: ciconha
           filename: contributors.svg
           plugin_contributors: yes
@@ -75,7 +75,7 @@ jobs:
       - name: Contributions
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.TSUKUYOMI_CICONHA }}
+          token: ${{ secrets.Ciconha_tsukuyomi }}
           user: ciconha
           filename: contributions.svg
           plugin_contributions: yes
@@ -85,7 +85,7 @@ jobs:
       - name: Discussions
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.TSUKUYOMI_CICONHA }}
+          token: ${{ secrets.Ciconha_tsukuyomi }}
           user: ciconha
           filename: discussions.svg
           plugin_discussions: yes
@@ -95,7 +95,7 @@ jobs:
       - name: Starred Topics
         uses: lowlighter/metrics@master
         with:
-          token: ${{ secrets.TSUKUYOMI_CICONHA }}
+          token: ${{ secrets.Ciconha_tsukuyomi }}
           user: ciconha
           filename: starred-topics.svg
           plugin_topics: yes
