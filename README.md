@@ -3,7 +3,7 @@
 [<img align="right" width="390" src="https://github.com/ciconha/ciconha/blob/main/discussions.svg">](#)
 <br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br>
-<br><br><br><br><br>
+<br><br><br><br>
 <br><br>
 <img src="https://skillicons.dev/icons?i=python,bash,django" align="right" width="150"/><br>
 <br><br>
