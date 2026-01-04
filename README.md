@@ -4,7 +4,7 @@
 <br><br><br><br><br><br><br>
 <br><br><br><br><br><br><br>
 <br><br><br><br><br>
-<br>
+<br><br>
 <img src="https://skillicons.dev/icons?i=python,bash,django" align="right" width="150"/><br>
 <br><br>
 <img src="https://skillicons.dev/icons?i=firebase,mongodb,linux" align="right" width="150"/>
