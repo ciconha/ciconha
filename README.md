@@ -10,7 +10,7 @@
 <img src="https://skillicons.dev/icons?i=firebase,mongodb,linux" align="right" width="180"/>
 <br>
 <img src="https://skillicons.dev/icons?i=docker,git,fastapi" align="right" width="170"/>
-<br><br
+<br><br>
 <img src="https://github-trophies.vercel.app/?username=Ciconha&theme=algolia" width="415" alt="trophy graph" align="right" top="-100" />
 <br>
 <br>
