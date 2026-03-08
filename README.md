@@ -11,7 +11,7 @@
 <br><br><br>
 <img src="https://skillicons.dev/icons?i=docker,git,fastapi" align="right" width="150"/>
 <br><br><br>
-<img src="https://github-trophies.vercel.app/?username=Ciconha&theme=algolia" width="415" alt="trophy graph" align="right" top="-200" />
+<img src="https://github-trophies.vercel.app/?username=Ciconha&theme=algolia" width="390" alt="trophy graph" align="right" top="-200" />
 <br>
 <br>
 <br><br><br><br><br><br><br><br><br>
