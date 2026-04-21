@@ -5,11 +5,11 @@
 <br><br><br><br><br><br><br>
 <br><br><br><br>
 <br><br>
-<img src="https://skillicons.dev/icons?i=python,bash,django" align="right" width="150"/><br>
+<img src="https://skillicons.dev/icons?i=python,bash,django,javascript" align="right" width="150"/><br>
 <br><br>
-<img src="https://skillicons.dev/icons?i=firebase,mongodb,linux" align="right" width="150"/>
+<img src="https://skillicons.dev/icons?i=firebase,mongodb,linux,java" align="right" width="150"/>
 <br><br><br>
-<img src="https://skillicons.dev/icons?i=docker,git,fastapi" align="right" width="150"/>
+<img src="https://skillicons.dev/icons?i=docker,git,fastapi,gitlab" align="right" width="150"/>
 <br><br><br>
 <img src="https://github-trophies.vercel.app/?username=Ciconha&theme=algolia" width="390" alt="trophy graph" align="right" top="-200" />
 <br>
