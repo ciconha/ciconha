@@ -1,313 +1,64 @@
-name: "👨‍💻 DEV HERO CARD"
+guild_card:
+    player:
+    name: "Eduardo Ciconha"
+    username: "@ciconha"
+    avatar: "https://avatars.githubusercontent.com/u/131923066?v=4"
+    avatar_fallback: "https://ui-avatars.com/api/?name=Eduardo%20Ciconha&background=4fd1c7&color=fff&size=150"
+    rank:
+      code: "B"
+      label: "Raro"
+      color: "#CD7F32"
 
-on:
-  workflow_dispatch:
-    inputs:
-      github_user:
-        description: 'Usuário do GitHub'
-        required: true
-        default: 'ciconha'
-      full_name:
-        description: 'Nome completo'
-        required: false
-        default: ''
-      company:
-        description: 'Empresa/Organização'
-        required: false
-        default: 'INSS'
-      role:
-        description: 'Cargo/Função'
-        required: false
-        default: 'Desenvolvedor'
-      location:
-        description: 'Localização'
-        required: false
-        default: 'Brasil'
-      
-      # Tech Stack
-      main_language:
-        description: 'Linguagem principal'
-        required: false
-        default: 'JavaScript'
-      framework:
-        description: 'Framework principal'
-        required: false
-        default: 'React'
-      database:
-        description: 'Banco de dados'
-        required: false
-        default: 'PostgreSQL'
-      
-      # Stats
-      experience:
-        description: 'Anos de experiência'
-        required: false
-        default: '2'
-      availability:
-        description: 'Disponibilidade (%)'
-        required: false
-        default: '80'
+  bio:
+    text: |
+      夜幕降临
+      ブロック7
+    location:
+      flag: "🇧🇷"
+      country: "Brasil"
 
-permissions:
-  contents: write
+  class:
+    name: "Clérigo DevOps"
+    specialization: "Backend Sorcerer 🔮"
+    description: "Curador dos pipelines e deploy"
+    icon: "⛪"
 
-jobs:
-  create-dev-card:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: 📥 Checkout do repositório
-        uses: actions/checkout@v4
-      
-      - name: ⚙️ Instalar dependências
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y curl jq
-      
-      - name: 🔍 Buscar dados do GitHub
-        id: github-data
-        env:
-          GH_TOKEN: ${{ secrets.Ciconha_tsukuyomi }}
-        run: |
-          USER="${{ github.event.inputs.github_user }}"
-          
-          echo "📡 Buscando dados do GitHub para: $USER"
-          
-          # Buscar dados do usuário
-          if [ -n "$GH_TOKEN" ]; then
-            curl -s -H "Authorization: token $GH_TOKEN" \
-                 "https://api.github.com/users/$USER" > user.json
-            curl -s -H "Authorization: token $GH_TOKEN" \
-                 "https://api.github.com/users/$USER/repos?sort=stars&per_page=5" > repos.json
-          else
-            curl -s "https://api.github.com/users/$USER" > user.json
-            curl -s "https://api.github.com/users/$USER/repos?sort=stars&per_page=5" > repos.json
-          fi
-          
-          # Extrair dados
-          AVATAR_URL=$(jq -r '.avatar_url' user.json | sed 's/\?v=.*//')
-          AVATAR_URL="${AVATAR_URL}&size=150"
-          
-          BIO=$(jq -r '.bio // "Developer passionate about technology."' user.json)
-          if [ "$BIO" = "null" ]; then
-            BIO="Developer passionate about technology."
-          fi
-          
-          # Nome (usar do GitHub se não fornecido)
-          GITHUB_NAME=$(jq -r '.name // ""' user.json)
-          if [ -z "$GITHUB_NAME" ] || [ "$GITHUB_NAME" = "null" ]; then
-            GITHUB_NAME="$USER"
-          fi
-          
-          # Contar repositórios e seguidores
-          PUBLIC_REPOS=$(jq -r '.public_repos // 0' user.json)
-          FOLLOWERS=$(jq -r '.followers // 0' user.json)
-          
-          # Top 3 projetos com mais estrelas
-          echo '[]' > top_projects.json
-          if [ -f repos.json ] && [ -s repos.json ]; then
-            jq '[.[0:3] | .[] | {name: .name, stars: (.stargazers_count // 0), language: (.language // "N/A")}]' repos.json > top_projects.json
-          fi
-          
-          echo "avatar_url=$AVATAR_URL" >> $GITHUB_OUTPUT
-          echo "github_name=$GITHUB_NAME" >> $GITHUB_OUTPUT
-          echo "bio=$BIO" >> $GITHUB_OUTPUT
-          echo "public_repos=$PUBLIC_REPOS" >> $GITHUB_OUTPUT
-          echo "followers=$FOLLOWERS" >> $GITHUB_OUTPUT
-          
-          echo "✅ Dados coletados:"
-          echo "👤 Nome: $GITHUB_NAME"
-          echo "📝 Bio: $BIO"
-          echo "📦 Repos: $PUBLIC_REPOS"
-          echo "👥 Seguidores: $FOLLOWERS"
-      
-      - name: 🎨 Criar diretório para cards
-        run: mkdir -p cards
-      
-      - name: 🖼️ Gerar Card Dev Minimalista
-        run: |
-          # Dados do GitHub
-          AVATAR_URL="${{ steps.github-data.outputs.avatar_url }}"
-          GITHUB_NAME="${{ steps.github-data.outputs.github_name }}"
-          BIO="${{ steps.github-data.outputs.bio }}"
-          PUBLIC_REPOS="${{ steps.github-data.outputs.public_repos }}"
-          FOLLOWERS="${{ steps.github-data.outputs.followers }}"
-          
-          # Inputs do usuário
-          FULL_NAME="${{ github.event.inputs.full_name }}"
-          if [ -z "$FULL_NAME" ] || [ "$FULL_NAME" = "null" ]; then
-            FULL_NAME="$GITHUB_NAME"
-          fi
-          
-          COMPANY="${{ github.event.inputs.company }}"
-          ROLE="${{ github.event.inputs.role }}"
-          LOCATION="${{ github.event.inputs.location }}"
-          MAIN_LANG="${{ github.event.inputs.main_language }}"
-          FRAMEWORK="${{ github.event.inputs.framework }}"
-          DATABASE="${{ github.event.inputs.database }}"
-          EXPERIENCE="${{ github.event.inputs.experience }}"
-          AVAILABILITY="${{ github.event.inputs.availability }}"
-          
-          # Ler projetos top
-          PROJECT1_NAME=$(jq -r '.[0].name // ""' top_projects.json 2>/dev/null)
-          PROJECT1_STARS=$(jq -r '.[0].stars // 0' top_projects.json 2>/dev/null)
-          PROJECT1_LANG=$(jq -r '.[0].language // ""' top_projects.json 2>/dev/null)
-          
-          PROJECT2_NAME=$(jq -r '.[1].name // ""' top_projects.json 2>/dev/null)
-          PROJECT2_STARS=$(jq -r '.[1].stars // 0' top_projects.json 2>/dev/null)
-          PROJECT2_LANG=$(jq -r '.[1].language // ""' top_projects.json 2>/dev/null)
-          
-          PROJECT3_NAME=$(jq -r '.[2].name // ""' top_projects.json 2>/dev/null)
-          PROJECT3_STARS=$(jq -r '.[2].stars // 0' top_projects.json 2>/dev/null)
-          PROJECT3_LANG=$(jq -r '.[2].language // ""' top_projects.json 2>/dev/null)
-          
-          # Valores padrão para projetos
-          [ -z "$PROJECT1_NAME" ] && PROJECT1_NAME="No projects" && PROJECT1_STARS=0 && PROJECT1_LANG="N/A"
-          [ -z "$PROJECT2_NAME" ] && PROJECT2_NAME="No projects" && PROJECT2_STARS=0 && PROJECT2_LANG="N/A"
-          [ -z "$PROJECT3_NAME" ] && PROJECT3_NAME="No projects" && PROJECT3_STARS=0 && PROJECT3_LANG="N/A"
-          
-          # Data
-          DATE=$(date +'%d/%m/%Y')
-          FILENAME=$(echo "$FULL_NAME" | tr ' ' '_' | tr -cd '[:alnum:]_')
-          SVG_FILE="cards/${FILENAME}_dev.svg"
-          
-          # Criar SVG Minimalista
-          cat > "$SVG_FILE" << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="500" height="300" viewBox="0 0 500 300">
-          <defs>
-            <style>
-              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400&display=swap');
-              
-              .name { font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 600; fill: #1a1a1a; }
-              .title { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; fill: #666666; }
-              .label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400; fill: #888888; letter-spacing: 0.5px; text-transform: uppercase; }
-              .value { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: #333333; }
-              .bio { font-family: 'Inter', sans-serif; font-size: 12px; fill: #444444; line-height: 1.4; }
-              .project-name { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #1a1a1a; }
-              .project-stats { font-family: 'Inter', sans-serif; font-size: 9px; fill: #666666; }
-            </style>
-            
-            <!-- Gradiente sutil -->
-            <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#ffffff"/>
-              <stop offset="100%" stop-color="#f8f9fa"/>
-            </linearGradient>
-            
-            <linearGradient id="expBar" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#2563eb"/>
-              <stop offset="100%" stop-color="#3b82f6"/>
-            </linearGradient>
-          </defs>
-          
-          <!-- Fundo clean -->
-          <rect width="500" height="300" fill="url(#bgGradient)"/>
-          <rect x="20" y="20" width="460" height="260" rx="12" fill="white" stroke="#e5e7eb" stroke-width="1"/>
-          
-          <!-- Avatar -->
-          <defs>
-            <clipPath id="avatarClip">
-              <circle cx="70" cy="70" r="30"/>
-            </clipPath>
-          </defs>
-          
-          <circle cx="70" cy="70" r="32" fill="#f3f4f6"/>
-          <circle cx="70" cy="70" r="30" fill="#f8fafc"/>
-          <image href="$AVATAR_URL" x="40" y="40" width="60" height="60" clip-path="url(#avatarClip)"/>
-          
-          <!-- Nome e título -->
-          <text x="120" y="55" class="name">$FULL_NAME</text>
-          <text x="120" y="75" class="title">$ROLE • $COMPANY</text>
-          
-          <!-- Bio -->
-          <text x="120" y="95" class="label">SOBRE</text>
-          <text x="120" y="110" class="bio" width="200">$BIO</text>
-          
-          <!-- Stats do GitHub -->
-          <g transform="translate(120, 130)">
-            <rect x="0" y="0" width="100" height="30" rx="6" fill="#f8fafc"/>
-            <text x="10" y="12" class="label">Repos</text>
-            <text x="10" y="24" class="value" font-weight="600">$PUBLIC_REPOS</text>
-            
-            <rect x="110" y="0" width="100" height="30" rx="6" fill="#f8fafc"/>
-            <text x="120" y="12" class="label">Followers</text>
-            <text x="120" y="24" class="value" font-weight="600">$FOLLOWERS</text>
-            
-            <rect x="220" y="0" width="100" height="30" rx="6" fill="#f8fafc"/>
-            <text x="230" y="12" class="label">Exp</text>
-            <text x="230" y="24" class="value" font-weight="600">${EXPERIENCE}y</text>
-          </g>
-          
-          <!-- Tech Stack -->
-          <g transform="translate(20, 170)">
-            <text x="0" y="0" class="label">TECH STACK</text>
-            
-            <g transform="translate(0, 15)">
-              <rect x="0" y="0" width="140" height="25" rx="4" fill="#eff6ff"/>
-              <text x="10" y="16" class="value">$MAIN_LANG</text>
-              
-              <rect x="150" y="0" width="140" height="25" rx="4" fill="#f0f9ff"/>
-              <text x="160" y="16" class="value">$FRAMEWORK</text>
-              
-              <rect x="300" y="0" width="140" height="25" rx="4" fill="#f0fdf4"/>
-              <text x="310" y="16" class="value">$DATABASE</text>
-            </g>
-          </g>
-          
-          <!-- Barra de experiência -->
-          <g transform="translate(20, 220)">
-            <text x="0" y="0" class="label">AVAILABILITY</text>
-            <rect x="0" y="10" width="320" height="8" rx="4" fill="#e5e7eb"/>
-            <rect x="0" y="10" width="$((320 * AVAILABILITY / 100))" height="8" rx="4" fill="url(#expBar)"/>
-            <text x="330" y="15" class="value">${AVAILABILITY}%</text>
-          </g>
-          
-          <!-- Projetos Top -->
-          <g transform="translate(20, 245)">
-            <text x="0" y="0" class="label">TOP PROJECTS</text>
-            
-            <g transform="translate(0, 15)">
-              <!-- Projeto 1 -->
-              <rect x="0" y="0" width="140" height="40" rx="6" fill="#f8fafc"/>
-              <text x="10" y="15" class="project-name">$PROJECT1_NAME</text>
-              <text x="10" y="28" class="project-stats">⭐ $PROJECT1_STARS • $PROJECT1_LANG</text>
-              
-              <!-- Projeto 2 -->
-              <rect x="150" y="0" width="140" height="40" rx="6" fill="#f8fafc"/>
-              <text x="160" y="15" class="project-name">$PROJECT2_NAME</text>
-              <text x="160" y="28" class="project-stats">⭐ $PROJECT2_STARS • $PROJECT2_LANG</text>
-              
-              <!-- Projeto 3 -->
-              <rect x="300" y="0" width="140" height="40" rx="6" fill="#f8fafc"/>
-              <text x="310" y="15" class="project-name">$PROJECT3_NAME</text>
-              <text x="310" y="28" class="project-stats">⭐ $PROJECT3_STARS • $PROJECT3_LANG</text>
-            </g>
-          </g>
-          
-          <!-- Footer -->
-          <g transform="translate(20, 290)">
-            <text x="0" y="0" class="label">📍 $LOCATION</text>
-            <text x="350" y="0" class="label" text-anchor="end">Updated: $DATE</text>
-          </g>
-          
-          <!-- Linhas decorativas minimalistas -->
-          <line x1="20" y1="165" x2="480" y2="165" stroke="#e5e7eb" stroke-width="1"/>
-          <line x1="20" y1="215" x2="480" y2="215" stroke="#e5e7eb" stroke-width="1"/>
-          <line x1="20" y1="240" x2="480" y2="240" stroke="#e5e7eb" stroke-width="1"/>
-          
-          </svg>
-          EOF
-          
-          echo "✅ Card Dev criado: $SVG_FILE"
-          echo "👨‍💻 Design: Minimalista Dev"
-          echo "📊 Stats: $PUBLIC_REPOS repos, $FOLLOWERS followers"
-          echo "⭐ Top Projeto: $PROJECT1_NAME ($PROJECT1_STARS ⭐)"
-      
-      - name: 📤 Salvar card
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          
-          git add cards/
-          git commit -m "👨‍💻 Add dev card: ${{ github.event.inputs.github_user }}" || echo "Sem alterações"
-          git push || echo "Push falhou ou sem alterações"
-          echo "✅ Workflow completo!"
+  stats:
+    stars: 60
+    forks: 0
+    repositories: 35
+    followers: 109
+
+  xp:
+    level: 2
+    current: 725
+    next_level: 1000
+    total: "1.7K"
+    progress_percent: 72.5
+
+  meta:
+    started_at: "2023-04-26"
+    formatted: "26/04/2023"
+
+  actions:
+    - id: "resume"
+      label: "Currículo"
+      icon: "fas fa-scroll"
+    - id: "projects"
+      label: "Projetos"
+      icon: "fas fa-project-diagram"
+    - id: "certificate"
+      label: "Certificado"
+      icon: "fas fa-award"
+    - id: "qr"
+      label: "QR Code"
+      icon: "fas fa-qrcode"
+
+  seal:
+    icon: "fas fa-dragon"
+    title: "GitHub Guild"
+    subtitle: "Gildenkai Authorization"
+
+  qr_modal:
+    title: "QR Code da Guilda"
+    trigger: "card-qr"
