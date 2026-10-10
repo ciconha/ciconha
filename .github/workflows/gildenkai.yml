@@ -1,64 +1,43 @@
-guild_card:
-   player:
-    name: "Eduardo Ciconha"
-    username: "@ciconha"
-    avatar: "https://avatars.githubusercontent.com/u/131923066?v=4"
-    avatar_fallback: "https://ui-avatars.com/api/?name=Eduardo%20Ciconha&background=4fd1c7&color=fff&size=150"
-    rank:
-      code: "B"
-      label: "Raro"
-      color: "#CD7F32"
+# ⚔ GuildenKain — GitHub Guild Card
+# Coloque em: .github/workflows/guild-card.yml
+# Atualiza o cartão automaticamente todo dia às 06:00 UTC
 
-  bio:
-    text: |
-      夜幕降临
-      ブロック7
-    location:
-      flag: "🇧🇷"
-      country: "Brasil"
+name: Update Guild Card
 
-  class:
-    name: "Clérigo DevOps"
-    specialization: "Backend Sorcerer 🔮"
-    description: "Curador dos pipelines e deploy"
-    icon: "⛪"
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
 
-  stats:
-    stars: 60
-    forks: 0
-    repositories: 35
-    followers: 109
+permissions:
+  contents: write
 
-  xp:
-    level: 2
-    current: 725
-    next_level: 1000
-    total: "1.7K"
-    progress_percent: 72.5
+jobs:
+  update-card:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  meta:
-    started_at: "2023-04-26"
-    formatted: "26/04/2023"
+      - name: Download latest card
+        run: |
+          curl -sL "https://raw.githubusercontent.com/ciconha/ciconha/main/guild-card.svg" -o guild-card.svg || true
 
-  actions:
-    - id: "resume"
-      label: "Currículo"
-      icon: "fas fa-scroll"
-    - id: "projects"
-      label: "Projetos"
-      icon: "fas fa-project-diagram"
-    - id: "certificate"
-      label: "Certificado"
-      icon: "fas fa-award"
-    - id: "qr"
-      label: "QR Code"
-      icon: "fas fa-qrcode"
+      - name: Commit & Push
+        run: |
+          git config user.name "Guild Bot"
+          git config user.email "guild-bot@users.noreply.github.com"
+          git add guild-card.svg || true
+          git diff --staged --quiet || git commit -m "⚔ Update Guild Card [skip ci]"
+          git push || true
 
-  seal:
-    icon: "fas fa-dragon"
-    title: "GitHub Guild"
-    subtitle: "Gildenkai Authorization"
-
-  qr_modal:
-    title: "QR Code da Guilda"
-    trigger: "card-qr"
+# ─────────────────────────────────────────────────
+# USO:
+# 1. Baixe o SVG pelo botão "Baixar SVG"
+# 2. Coloque guild-card.svg na raiz do seu repositório
+# 3. Adicione este arquivo em .github/workflows/guild-card.yml
+# 4. No README.md, adicione:
+#    ![Guild Card](./guild-card.svg)
+# ─────────────────────────────────────────────────
