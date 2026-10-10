@@ -1,64 +1,62 @@
-guild_card:
-    player:
-    name: "Eduardo Ciconha"
-    username: "@ciconha"
-    avatar: "https://avatars.githubusercontent.com/u/131923066?v=4"
-    avatar_fallback: "https://ui-avatars.com/api/?name=Eduardo%20Ciconha&background=4fd1c7&color=fff&size=150"
-    rank:
-      code: "B"
-      label: "Raro"
-      color: "#CD7F32"
+name: "👨‍💻 DEV HERO CARD"
 
-  bio:
-    text: |
-      夜幕降临
-      ブロック7
-    location:
-      flag: "🇧🇷"
-      country: "Brasil"
+on:
+  workflow_dispatch:
+    inputs:
+      github_user:
+        description: 'Usuário do GitHub'
+        required: true
+        default: 'ciconha'
+      full_name:
+        description: 'Nome completo'
+        required: false
+        default: ''
+      company:
+        description: 'Empresa/Organização'
+        required: false
+        default: 'INSS'
+      role:
+        description: 'Cargo/Função'
+        required: false
+        default: 'Desenvolvedor'
+      location:
+        description: 'Localização'
+        required: false
+        default: 'Brasil'
+      
+      # Tech Stack
+      main_language:
+        description: 'Linguagem principal'
+        required: false
+        default: 'JavaScript'
+      framework:
+        description: 'Framework principal'
+        required: false
+        default: 'React'
+      database:
+        description: 'Banco de dados'
+        required: false
+        default: 'PostgreSQL'
+      
+      # Stats
+      experience:
+        description: 'Anos de experiência'
+        required: false
+        default: '2'
+      availability:
+        description: 'Disponibilidade (%)'
+        required: false
+        default: '80'
 
-  class:
-    name: "Clérigo DevOps"
-    specialization: "Backend Sorcerer 🔮"
-    description: "Curador dos pipelines e deploy"
-    icon: "⛪"
+permissions:
+  contents: write
 
-  stats:
-    stars: 60
-    forks: 0
-    repositories: 35
-    followers: 109
-
-  xp:
-    level: 2
-    current: 725
-    next_level: 1000
-    total: "1.7K"
-    progress_percent: 72.5
-
-  meta:
-    started_at: "2023-04-26"
-    formatted: "26/04/2023"
-
-  actions:
-    - id: "resume"
-      label: "Currículo"
-      icon: "fas fa-scroll"
-    - id: "projects"
-      label: "Projetos"
-      icon: "fas fa-project-diagram"
-    - id: "certificate"
-      label: "Certificado"
-      icon: "fas fa-award"
-    - id: "qr"
-      label: "QR Code"
-      icon: "fas fa-qrcode"
-
-  seal:
-    icon: "fas fa-dragon"
-    title: "GitHub Guild"
-    subtitle: "Gildenkai Authorization"
-
-  qr_modal:
-    title: "QR Code da Guilda"
-    trigger: "card-qr"
+jobs:
+  create-dev-card:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout do repositório
+        uses: actions/checkout@v4
+      
+      - name: ⚙️ Instalar dependências
