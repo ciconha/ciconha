@@ -1,1 +1,24 @@
-404: Not Found
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="560" height="340" viewBox="0 0 560 340">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1c0a0a"/><stop offset="100%" stop-color="#0d0505"/></linearGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#fca5a5"/></linearGradient>
+    <clipPath id="avClip"><circle cx="494" cy="66" r="36"/></clipPath>
+  </defs>
+  <rect width="560" height="340" rx="12" fill="url(#bg)"/>
+  <rect x="2" y="2" width="556" height="336" rx="11" fill="none" stroke="#b91c1c" stroke-width="2"/>
+  <text x="24" y="52" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="24" font-weight="700" fill="#ef4444">Eduardo Ciconha</text>
+  <text x="24" y="86" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13" fill="#e5e5e5">Independente - 夜幕降临</text>
+  <text x="24" y="112" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13" fill="#e5e5e5">FULLSTACK RANGER - Rank D - HUNTER</text>
+  <image xlink:href="https://avatars.githubusercontent.com/u/131923066?v=4" x="458" y="30" width="72" height="72" clip-path="url(#avClip)" preserveAspectRatio="xMidYMid slice"/>
+  <circle cx="494" cy="66" r="36" fill="none" stroke="#b91c1c" stroke-width="2"/>
+  <line x1="24" y1="138" x2="536" y2="138" stroke="#b91c1c" stroke-opacity="0.35"/>
+  <text x="24" y="166" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13" fill="#e5e5e5">Linguagem principal: Python</text>
+  <text x="24" y="192" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13" fill="#e5e5e5">Nivel: 2 - XP Total: 3997</text>
+  <rect x="24" y="204" width="512" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+  <rect x="24" y="204" width="511.2" height="8" rx="4" fill="url(#bar)"/>
+  <text x="24" y="244" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="14" font-weight="700" fill="#fca5a5">Destaques:</text>
+  <text x="32" y="268" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13" fill="#e5e5e5">- portifolio-mobile - 3 stars</text><text x="32" y="288" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13" fill="#e5e5e5">- API-Dijkstra - 3 stars</text><text x="32" y="308" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13" fill="#e5e5e5">- ciconha - 2 stars</text>
+  <line x1="24" y1="304" x2="536" y2="304" stroke="#b91c1c" stroke-opacity="0.35"/>
+  <text x="280" y="326" text-anchor="middle" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="11" fill="#9ca3af">Gerado em 14/10/2026 - 35 repos - 60 stars - 110 followers</text>
+</svg>
