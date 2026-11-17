@@ -67,25 +67,29 @@ async function fetchAllData(username) {
   };
   const cls = { key, ...classMap[key], langTotals };
 
-  // Calcular Stats
-  const age = (Date.now() - new Date(user.created_at)) / (365.25 * 24 * 3600 * 1000);
-  const totalXP = stars * 15 + forks * 8 + (user.public_repos || 0) * 30 + (user.followers || 0) * 6 + Math.floor(age * 400);
-  const XP_PER_LEVEL = 2000;
-  const level = Math.floor(totalXP / XP_PER_LEVEL) + 1;
-  const xpCurrent = totalXP % XP_PER_LEVEL;
+  // SAFE MATH: Calcular Stats
+  const created = new Date(user.created_at).getTime();
+  const now = Date.now();
+  const age = isNaN(created) ? 0 : (now - created) / (365.25 * 24 * 3600 * 1000);
+  const totalXP = (stars || 0) * 15 + (forks || 0) * 8 + (user.public_repos || 0) * 30 + (user.followers || 0) * 6 + Math.floor((age || 0) * 400);
+  const safeTotalXP = isNaN(totalXP) ? 0 : totalXP;
+  const safeLevel = Math.floor(safeTotalXP / 2000) + 1;
+  const safeXpCurrent = safeTotalXP % 2000;
+  const safeXpProgress = isNaN(safeXpCurrent) ? 0 : Math.min((safeXpCurrent / 2000) * 100, 100);
+
   const stats = {
-    stars, forks, repos: user.public_repos || 0, followers: user.followers || 0,
-    totalXP, level, xpCurrent, xpNeeded: XP_PER_LEVEL,
-    xpProgress: Math.min((xpCurrent / XP_PER_LEVEL) * 100, 100)
+    stars: stars || 0, forks: forks || 0, repos: user.public_repos || 0, followers: user.followers || 0,
+    totalXP: safeTotalXP, level: safeLevel, xpCurrent: safeXpCurrent, xpNeeded: 2000,
+    xpProgress: safeXpProgress
   };
 
-  // Calcular Rank
+  // SAFE MATH: Calcular Rank
   let rank = { rank: 'E', color: '#fc8181', name: 'NOVICE' };
-  if (totalXP >= 50000) rank = { rank: 'S', color: '#FFD700', name: 'MONARCH' };
-  else if (totalXP >= 25000) rank = { rank: 'A', color: '#f472b6', name: 'S-RANK' };
-  else if (totalXP >= 12000) rank = { rank: 'B', color: '#c084fc', name: 'ELITE' };
-  else if (totalXP >= 5000) rank = { rank: 'C', color: '#4fd1c7', name: 'VETERAN' };
-  else if (totalXP >= 1500) rank = { rank: 'D', color: '#a855f7', name: 'HUNTER' };
+  if (safeTotalXP >= 50000) rank = { rank: 'S', color: '#FFD700', name: 'MONARCH' };
+  else if (safeTotalXP >= 25000) rank = { rank: 'A', color: '#f472b6', name: 'S-RANK' };
+  else if (safeTotalXP >= 12000) rank = { rank: 'B', color: '#c084fc', name: 'ELITE' };
+  else if (safeTotalXP >= 5000) rank = { rank: 'C', color: '#4fd1c7', name: 'VETERAN' };
+  else if (safeTotalXP >= 1500) rank = { rank: 'D', color: '#a855f7', name: 'HUNTER' };
 
   const langTop = Object.entries(langTotals).sort((a, b) => b[1] - a[1]);
   return { user, repos, topRepos, cls, stats, rank, langTop };
