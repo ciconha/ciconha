@@ -2,35 +2,15 @@ guild_card:
   player:
     name: "Eduardo Ciconha"
     username: "@ciconha"
-    avatar: "https://avatars.githubusercontent.com/u/131923066?v=4"
-    rank:
-      code: "E"
-      label: "NOVICE"
-      color: "#fc8181"
-  bio:
-    text: |
-      夜幕降临 
-      ブロック7
-      
-    location:
-      flag: "🌍"
-      country: "🇧🇷 (Brasil)"
   class:
     name: "FULLSTACK RANGER"
-    specialization: "Python Master"
   stats:
     stars: 60
     forks: 1
     repositories: 35
-    followers: 0
+    followers: 106
   xp:
-    level: NaN
-    current: NaN
-    next_level: 2000
-    total: "0"
-    progress_percent: NaN
-  featured:
-    []
+    level: 3
+    total: "4018"
   meta:
-    started_at: "2023-04-26"
-    formatted: "26/04/2023"
+    generated_at: "17/11/2026"
