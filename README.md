@@ -16,7 +16,7 @@
 <br>
 <br><br><br><br><br><br>
 
-<img width="380" alt="Image" src="https://github.com/ciconha/ciconha/blob/main/guild-card.svg" /> <img align="right" width="380" src="https://github.com/user-attachments/assets/3f3f3d59-76b1-4b42-b275-c903b952d1a5">
+<img width="400" alt="Image" src="https://github.com/ciconha/ciconha/blob/main/guild-card.svg" /> <img align="right" width="400" src="https://github.com/user-attachments/assets/3f3f3d59-76b1-4b42-b275-c903b952d1a5">
 
 <br><br><br><br>
 > Bom caso você queira ver mais projetos e conteudos que eu desenvolvo convido você a olhar o meu [space](https://ciconha-space.vercel.app/). Lá eu sou mais interativo do que no linkedin e outras redes.
