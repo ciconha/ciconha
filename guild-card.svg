@@ -14,11 +14,11 @@
   <circle cx="494" cy="66" r="36" fill="none" stroke="#b91c1c" stroke-width="2"/>
   <line x1="24" y1="138" x2="536" y2="138" stroke="#b91c1c" stroke-opacity="0.35"/>
   <text x="24" y="166" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="13" fill="#e5e5e5">💻 Linguagem principal: <tspan font-weight="700" fill="#fca5a5">Python</tspan></text>
-  <text x="24" y="192" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="13" fill="#e5e5e5">🏆 Nível: <tspan font-weight="700" fill="#fca5a5">3</tspan> • XP Total: <tspan font-weight="700" fill="#fca5a5">4009</tspan></text>
+  <text x="24" y="192" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="13" fill="#e5e5e5">🏆 Nível: <tspan font-weight="700" fill="#fca5a5">3</tspan> • XP Total: <tspan font-weight="700" fill="#fca5a5">4010</tspan></text>
   <rect x="24" y="204" width="512" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
-  <rect x="24" y="204" width="2.3" height="8" rx="4" fill="url(#barGrad)"/>
+  <rect x="24" y="204" width="2.6" height="8" rx="4" fill="url(#barGrad)"/>
   <text x="24" y="244" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="14" font-weight="700" fill="#fca5a5">⭐ Destaques:</text>
   <text x="32" y="268" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="13" fill="#e5e5e5">• portifolio-mobile — ⭐ 3</text><text x="32" y="288" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="13" fill="#e5e5e5">• API-Dijkstra — ⭐ 3</text><text x="32" y="308" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="13" fill="#e5e5e5">• ciconha — ⭐ 2</text>
   <line x1="24" y1="304" x2="536" y2="304" stroke="#b91c1c" stroke-opacity="0.35"/>
-  <text x="280" y="326" text-anchor="middle" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="11" fill="#9ca3af">Gerado em 20/11/2026 • 35 repos • 60 ⭐ • 104 seguidores</text>
+  <text x="280" y="326" text-anchor="middle" font-family="Segoe UI,Helvetica,Arial,sans-serif" font-size="11" fill="#9ca3af">Gerado em 21/11/2026 • 35 repos • 60 ⭐ • 104 seguidores</text>
 </svg>
